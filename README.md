@@ -129,9 +129,10 @@ python wetterapp.py
 
 ---
 
-## 📄 Lizenz
+## 📄 License
 
-[MIT-License]
+AGPLv3 — see LICENSE file for full terms.
+© 2025 <PKI Gruppe B1-3>
 
 ---
 
