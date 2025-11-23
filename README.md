@@ -117,7 +117,7 @@ python wetterapp.py
 
 ## 👥 Team
 
-- Adam
+- Adham
 - Tugba 
 - Nick-Andre
 - Julian
