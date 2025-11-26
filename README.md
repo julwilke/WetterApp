@@ -13,6 +13,7 @@ Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wet
 - [ ] Wetter-APIs recherchieren (z.B. OpenWeatherMap, MeteoStat, OpenMeteo)
 - [ ] Python-Version festlegen (empfohlen: 3.10+, bislang haben wir alle 3.13)
 - [ ] Einlesen in Python Installation, Virtuelle Umgebungen (.venv) und ggf. lokale Programmierumgebungen (VSC, PyCharm, ...)
+- [ ] Daten speichern oder nur live abrufen (CSV/SQLite) Problem bei Live: begrenzte API-Calls, mindestens einen Ordner mit Mock-Daten/historischen Daten
 
 ### 📅 Bis Samstag, 29.11.2025
 - [ ] API-Key beantragen
@@ -23,7 +24,7 @@ Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wet
 
 ## 🎯 Projektziele
 
-- **Phase 1**: Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole
+- **Phase 1**: Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
 - **Phase 2**: Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
 - **Phase 3**: Übergang zur Weboberfläche zur Benutzerinteraktion, ggf. in Phase 2 schon in diese Richtung hinarbeiten
 - **Phase 4**: Integration von KI-Modellen (z.B. Wettervorhersagen, Mustererkennung)
@@ -49,21 +50,26 @@ Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wet
 - [ ] Logging hinzufügen
 - [ ] Unit-Tests schreiben
 
+- Bis hier sollte ein abgabefähiges, robustes, ordentliches und gut bewertbares Projekt bereits vorliegen! Rest ist nur noch erweitern und verbessern.
+
 ### 3: Erweiterte Funktionen
 - [ ] Historische Wetterdaten abrufen
 - [ ] Datenvisualisierung (matplotlib/plotly)
 - [ ] Mehrere Standorte vergleichen
 
-### 4: KI-Integration
+### 4: Benutzeroberfläche
+- [ ] Weboberfläche (Flask/Streamlit) oder Desktopumgebung? (Tkinter / PyQt / PySide) - Minimum: Eingabe PLZ, Ausgabe bestimmter Wetterdaten
+
+### 5: KI-Integration
 - [ ] Datensatz für Training vorbereiten
 - [ ] Einfaches ML-Modell trainieren (z.B. Temperaturvorhersage)
 - [ ] Modell evaluieren und optimieren
+- [ ] Ideen: Clustering von Temperaturmustern, Korrelationen zwischen Feuchte, Wind, Temperatur, kleine Wettervorhersage selbst erstellen
 
-### 5: Finalisierung
-- [ ] Weboberfläche (Flask/Streamlit) - optional
-- [ ] Dokumentation vervollständigen
+### 6: Finalisierung
 - [ ] Code-Refactoring
 - [ ] Präsentation vorbereiten
+- [ ] READNE.md / requirements.txt / docs finalisieren
 
 ## 📚 Aufgabenstellung der FH
 
