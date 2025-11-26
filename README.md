@@ -8,26 +8,33 @@ Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wet
 
 ## ✅ To-Dos bis zum nächsten Meeting
 
-### 📅 Bis Mittwoch, 26.11.2025
-- [ ] Jeder einen privaten Branch erstellen und lokale Entwicklungsumgebung einrichten (Python lokal installieren, wenn man möchte VisualStudioCode, PyCharm, ...)
+### 📅 Bis Samstag/Sonntag, 29/30.11.2025
+- ✅ privaten Branch erstellen und lokale Entwicklungsumgebung einrichten (Python lokal installieren, wenn man möchte VisualStudioCode, PyCharm, ...)
+- ✅ Erstes funktionierendes Skript: Eingabe PLZ → Ausgabe Wetterdaten in der Konsole
 - [ ] Wetter-APIs recherchieren (z.B. OpenWeatherMap, MeteoStat, OpenMeteo)
 - [ ] Python-Version festlegen (empfohlen: 3.10+, bislang haben wir alle 3.13)
 - [ ] Einlesen in Python Installation, Virtuelle Umgebungen (.venv) und ggf. lokale Programmierumgebungen (VSC, PyCharm, ...)
 - [ ] Daten speichern oder nur live abrufen (CSV/SQLite) Problem bei Live: begrenzte API-Calls, mindestens einen Ordner mit Mock-Daten/historischen Daten
-
-### 📅 Bis Samstag, 29.11.2025
-- [ ] API-Key beantragen
-- [ ] Erstes funktionierendes Skript: Eingabe PLZ → Ausgabe Wetterdaten in der Konsole
-- [ ] Requirements.txt mit benötigten Packages erstellen
+- [ ] API-Schnittstelle weiter bauen
 - [ ] Projekt-Struktur festlegen (Ordner, Module)
 - [ ] README mit Installationsanleitung ergänzen
+- [ ] WebApp Grund-Framework beginnen / recherchieren
 
 ## 🎯 Projektziele
 
-- **Phase 1**: Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
-- **Phase 2**: Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
-- **Phase 3**: Übergang zur Weboberfläche zur Benutzerinteraktion, ggf. in Phase 2 schon in diese Richtung hinarbeiten
-- **Phase 4**: Integration von KI-Modellen (z.B. Wettervorhersagen, Mustererkennung)
+- **Phase 1**: 
+    - Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
+    - Grundlegende WebApp entwickeln
+    - Abgabefertig und bewertbare Lösung fertigstellen
+- **Phase 2**: 
+    - Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
+- **Phase 3**: 
+    - Integration von KI-Modellen/-Funktionen (eigene Vorhersagen, Mustererkennung, Anomalien (z.B. "ungewöhnlich warmer Dezember")
+- **Phase 4**: Finalisierung
+    - configs anpassen
+    - requirements.txt fertigstellen und fremd-prüfen lassen
+    - README.MD sauber machen
+    - .venv Beispiel anfertigen für den Notfall
 
 ---
 ## 🗓️ Zeitplan
@@ -142,4 +149,4 @@ AGPLv3 — see LICENSE file for full terms.
 
 ---
 
-**Letzte Aktualisierung**: 23.11.2025
+**Letzte Aktualisierung**: 26.11.2025
