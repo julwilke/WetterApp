@@ -1,71 +1,95 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <title>Wetter Dashboard</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <!-- Font Awesome 5 (cdnjs) -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Dashboard - WetterApp</title>
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/styles.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
-<body>
-    <div id="sidebar" role="navigation" aria-label="Seitenmenü">
-        <div class="sidebar-header">
-            <i class="fas fa-cloud-sun app-icon" aria-hidden="true"></i>
-            <span class="app-name">WetterApp</span>
-        </div>
-        <a href="/" class="active" aria-current="page">Dashboard</a>
-        <a href="/history">Verlauf</a>
-    </div>
 
-    <div id="mainWrapper">
-        <div id="navbar">
-            <div class="logo">
-                <!-- Simple inline SVG logo -->
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <rect width="24" height="24" rx="5" fill="#2b73d0" />
-                    <path d="M6 14c1 0 1.5-1 2-2s1-2 2-2 2 1 2 2 1 2 2 2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                Wetter
+<body id="page-top">
+    <div id="wrapper" style="display:flex; align-items:stretch;">
+        <nav class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg p-0" style="width: 220px;">
+            <div class="container-fluid d-flex flex-column p-0"><a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#">
+                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-cloud-sun"></i></div>
+                    <div class="sidebar-brand-text mx-3"><span>Wetter-App</span></div>
+                </a>
+                <hr class="sidebar-divider my-0">
+                <ul class="navbar-nav text-light" id="accordionSidebar">
+                    <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="/history"><i class="fas fa-table"></i><span>Verlauf</span></a></li>
+                </ul>
+                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
             </div>
-            <div id="searchContainer">
-                <input type="text" id="cityInput" placeholder="Stadt eingeben...">
-                <button id="cityButton">Senden</button>
-            </div>
-            <div id="cityHeader">
-                <div id="cityDisplay">--</div>
-            </div>
-            <div id="menuContainer">
-                <button id="menuButton" aria-expanded="false" aria-haspopup="true">☰ Menü</button>
-                <div id="menuDropdown" role="menu" aria-hidden="true">
-                    <div class="statusRow">
-                        <span>API Status:</span>
-                        <span id="apiStatus" class="offline">Offline</span>
+        </nav>
+        <div class="d-flex flex-column" id="content-wrapper" style="flex:1 1 auto;">
+            <div id="content" style="background-color: #070a12; min-height:100vh;">
+                <nav class="navbar navbar-light navbar-expand bg-dark shadow mb-4 topbar static-top">
+                    <div class="container-fluid" style="display:flex; gap:12px; align-items:center; background-color: #101d34;">
+                        <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+                        <form class="d-none d-sm-inline-block me-auto ms-md-3 my-2 my-md-0 mw-100 navbar-search" style="flex:1;">
+                            <div class="input-group"><input id="cityInput" class="bg-light form-control border-0 small" type="text" placeholder="Suche nach Stadt..."><button id="cityButton" class="btn btn-primary py-0" type="button"><i class="fas fa-search"></i></button></div>
+                        </form>
+                        <ul class="navbar-nav flex-nowrap ms-auto">
+                            <li class="nav-item dropdown no-arrow mx-1">
+                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link" aria-expanded="false" data-bs-toggle="dropdown" href="#" style="font-size: 2rem;"><i class="fab fa-cloudscale fa-fw"></i></a>
+                                    <div class="dropdown-menu dropdown-menu-end bg-dark border-dark dropdown-list animated--grow-in">
+                                        <h6 class="dropdown-header border-dark" style="background-color: rgb(25,29,33);">Api Status</h6>
+                                        <div style="padding:10px; color:#cbd8e6;"><span>API:</span> <span id="apiStatus" class="offline">Offline</span></div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item dropdown no-arrow"><a class="nav-link" href="https://github.com/julwilke/WetterApp" style="font-size: 2rem;" target="_blank"><i class="fab fa-github"></i></a></li>
+                        </ul>
                     </div>
-                    <a href="https://github.com/julwilke/WetterApp" target="_blank" rel="noopener noreferrer">GitHub</a>
+                </nav>
+
+                <div class="container-fluid">
+                    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+                        <h3 class="mb-0" id="cityDisplay">--</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="#"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate Report</a>
+                    </div>
+
+                    <div id="dashboard" class="row" style="display:grid; gap:20px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                        <!-- Cards are injected by JS into #dashboard - IDs must match existing script -->
+                    </div>
+
+                    <!-- additional layout sections could follow (charts etc.) -->
                 </div>
             </div>
-        </div>
-
-        <div id="contentArea">
-            <div id="dashboard"></div>
-        </div>
+            <footer class="bg-white sticky-footer" style="background:transparent; border-top:1px solid rgba(255,255,255,0.03);">
+                <div class="container my-auto">
+                    <div class="text-center my-auto copyright"><span style="color:#cbd8e6;">Copyright © WetterApp 2025</span></div>
+                </div>
+            </footer>
+        </div><a class="border rounded d-inline scroll-to-top" href="#page-top" style="display:none;"><i class="fas fa-angle-up"></i></a>
     </div>
+
     <!-- History Modal -->
     <div id="historyOverlay" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center;">
-        <div id="historyModal" style="background:#071022; border:1px solid #1e2b3b; padding:18px; border-radius:8px; width: min(540px, 95%); color:#e6eef8; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
+        <div id="historyModal" style="background:#071022; border:1px solid #1e2b3b; padding:18px; border-radius:8px; width: min(640px, 95%); color:#e6eef8; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <strong id="historyTitle">Verlauf</strong>
                 <button id="historyClose" style="background:transparent; border:none; color:#e6eef8; font-size:20px;">✕</button>
             </div>
-            <div id="historyList" style="display:flex; flex-direction:row; gap:10px; justify-content:space-between;
-                align-items:center; flex-wrap:wrap;">
+            <div id="historyList" style="display:flex; flex-direction:row; gap:10px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
                 <!-- filled dynamically -->
             </div>
         </div>
     </div>
 
+    <!-- keep project scripts and the inline dashboard script intact -->
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+    <script src="/static/js/chart.min.js"></script>
+    <script src="/static/js/bs-init.js"></script>
+    <script src="/static/js/theme.js"></script>
+
     <script>
+        // Original dashboard script preserved to keep all functions
         const socket = io();
 
         // Display order for cards
@@ -179,12 +203,13 @@
 
         // Erstelle Blöcke für alle Variablen
         const elements = {};
+        const dashboard = document.getElementById('dashboard');
         weatherVars.forEach((v, idx) => {
             const block = document.createElement('div');
             block.className = "weather-block";
+            block.style.setProperty('min-height', '160px');
             // assign a color from list
             const color = colors[idx % colors.length];
-            // set color on title only via CSS variable (card background stays the same dark color)
             block.style.setProperty('--title-bg', color);
             const iconClass = iconMap[v] || 'fa-square';
             const label = labelMap[v] || v;
@@ -216,10 +241,9 @@
             elements[v] = document.getElementById(v);
 
             const handle = block.querySelector('.drag-handle');
-            // Make the whole card clickable but avoid clicks starting drag on handle
             block.dataset.var = v;
             block.addEventListener('click', (e) => {
-                if (e.target.classList.contains('drag-handle')) return; // ignore clicks on handle
+                if (e.target.classList.contains('drag-handle')) return;
                 openHistory(v);
             });
             handle.addEventListener('dragstart', (e) => {
@@ -234,7 +258,7 @@
             });
         });
 
-        // DnD reordering (allow dragging via handle)
+        // DnD reordering
         let draggedItem = null;
         const grid = dashboard;
         grid.addEventListener('dragover', (e) => {
@@ -260,14 +284,11 @@
         function openHistory(variable) {
             const label = labelMap[variable] || variable;
             historyTitle.innerText = `${label} Verlauf`;
-            // clear existing
             historyList.innerHTML = '';
-            // read current value
             const currentStr = (elements[variable] && elements[variable].innerText) ? elements[variable].innerText : '--';
             const unit = unitMap[variable] || '';
             let currentVal = parseFloat(currentStr);
-            // choose a delta size for simple demo
-            const deltaMap = { currentTemperature: 0.6, feelsLike: 0.6, tempMin:0.4, tempMax:0.4, humidity:1, windSpeed:1.2, visibility:100 }; 
+            const deltaMap = { currentTemperature: 0.6, feelsLike: 0.6, tempMin:0.4, tempMax:0.4, humidity:1, windSpeed:1.2, visibility:100 };
             const step = deltaMap[variable] || 1;
             for (let hr = -4; hr <= 4; hr++) {
                 const valStr = (!isNaN(currentVal)) ? (currentVal + hr * step).toFixed(1) : currentStr;
@@ -289,13 +310,12 @@
                     const cityDisplay = document.getElementById('cityDisplay');
                     if (cityDisplay) cityDisplay.innerText = data.city;
                 }
-                        if (elements[key]) elements[key].innerText = data[key];
-                        if (key === 'windDirection') {
-                            // rotate the compass arrow to the degree value
-                            const arrow = document.getElementById('arrow-windDirection');
-                            const deg = parseFloat(data[key]);
-                            if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
-                        }
+                if (elements[key]) elements[key].innerText = data[key];
+                if (key === 'windDirection') {
+                    const arrow = document.getElementById('arrow-windDirection');
+                    const deg = parseFloat(data[key]);
+                    if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
+                }
             }
         });
 
@@ -329,46 +349,17 @@
             }
         });
 
-        // Optional: Enter-Taste sendet auch
         cityInput.addEventListener('keydown', (e) => {
             if (e.key === "Enter") {
                 cityButton.click();
             }
         });
 
-        // Menu dropdown (API status & GitHub link)
-        const menuButton = document.getElementById('menuButton');
-        const menuContainer = document.getElementById('menuContainer');
-        const menuDropdown = document.getElementById('menuDropdown');
-        const apiStatus = document.getElementById('apiStatus');
-
-        function openMenu() {
-            menuDropdown.style.display = 'block';
-            menuButton.setAttribute('aria-expanded', 'true');
-            menuDropdown.setAttribute('aria-hidden', 'false');
-        }
-        function closeMenu() {
-            menuDropdown.style.display = 'none';
-            menuButton.setAttribute('aria-expanded', 'false');
-            menuDropdown.setAttribute('aria-hidden', 'true');
-        }
-        menuButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (menuDropdown.style.display === 'block') closeMenu(); else openMenu();
-        });
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!menuContainer.contains(e.target) && menuDropdown.style.display === 'block') closeMenu();
-        });
-        // Close on ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeMenu();
-        });
-
-        // API status checker
+        // Menu logic (small)
         async function updateApiStatus() {
             try {
                 const res = await fetch('/status');
+                const apiStatus = document.getElementById('apiStatus');
                 if (res.ok) {
                     apiStatus.innerText = 'Online';
                     apiStatus.classList.remove('offline');
@@ -379,14 +370,15 @@
                     apiStatus.classList.add('offline');
                 }
             } catch (err) {
+                const apiStatus = document.getElementById('apiStatus');
                 apiStatus.innerText = 'Offline';
                 apiStatus.classList.remove('online');
                 apiStatus.classList.add('offline');
             }
         }
-        // initial check and polling
         updateApiStatus();
         setInterval(updateApiStatus, 15000);
     </script>
 </body>
+
 </html>
