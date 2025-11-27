@@ -4,43 +4,298 @@
     <meta charset="UTF-8">
     <title>Wetter Dashboard</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <!-- Font Awesome 5 (cdnjs) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
-    <h1>Live Wetterdaten</h1>
-    <div id="dashboard"></div>
+    <div id="sidebar" role="navigation" aria-label="Seitenmenü">
+        <div class="sidebar-header">
+            <i class="fas fa-cloud-sun app-icon" aria-hidden="true"></i>
+            <span class="app-name">WetterApp</span>
+        </div>
+        <a href="/" class="active" aria-current="page">Dashboard</a>
+        <a href="/history">Verlauf</a>
+    </div>
+
+    <div id="mainWrapper">
+        <div id="navbar">
+            <div class="logo">
+                <!-- Simple inline SVG logo -->
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <rect width="24" height="24" rx="5" fill="#2b73d0" />
+                    <path d="M6 14c1 0 1.5-1 2-2s1-2 2-2 2 1 2 2 1 2 2 2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Wetter
+            </div>
+            <div id="searchContainer">
+                <input type="text" id="cityInput" placeholder="Stadt eingeben...">
+                <button id="cityButton">Senden</button>
+            </div>
+            <div id="cityHeader">
+                <div id="cityDisplay">--</div>
+            </div>
+            <div id="menuContainer">
+                <button id="menuButton" aria-expanded="false" aria-haspopup="true">☰ Menü</button>
+                <div id="menuDropdown" role="menu" aria-hidden="true">
+                    <div class="statusRow">
+                        <span>API Status:</span>
+                        <span id="apiStatus" class="offline">Offline</span>
+                    </div>
+                    <a href="https://github.com/julwilke/WetterApp" target="_blank" rel="noopener noreferrer">GitHub</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="contentArea">
+            <div id="dashboard"></div>
+        </div>
+    </div>
+    <!-- History Modal -->
+    <div id="historyOverlay" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,0.5); z-index:200; align-items:center; justify-content:center;">
+        <div id="historyModal" style="background:#071022; border:1px solid #1e2b3b; padding:18px; border-radius:8px; width: min(540px, 95%); color:#e6eef8; box-shadow:0 12px 30px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <strong id="historyTitle">Verlauf</strong>
+                <button id="historyClose" style="background:transparent; border:none; color:#e6eef8; font-size:20px;">✕</button>
+            </div>
+            <div id="historyList" style="display:flex; flex-direction:row; gap:10px; justify-content:space-between;
+                align-items:center; flex-wrap:wrap;">
+                <!-- filled dynamically -->
+            </div>
+        </div>
+    </div>
 
     <script>
         const socket = io();
 
+        // Display order for cards
         const weatherVars = [
-            "currentTemperature","feelsLike","tempMin","tempMax",
-            "humidity","pressure","weatherDescription","cloudCoverage",
-            "rain1h","rain3h","snow1h","snow3h",
-            "windSpeed","windGust","windDirection",
-            "uvIndex","sunrise","sunset","visibility","dewPoint",
-            "airQualityIndex","pm10","pm2_5","co","no2","o3",
-            "pollenCount","pressureTrend","fog"
+            "currentTemperature","feelsLike","tempMax","tempMin",
+            "humidity","pressure","pressureTrend","windSpeed","windGust","windDirection",
+            "weatherDescription","cloudCoverage","rain1h","rain3h","snow1h","snow3h",
+            "visibility","uvIndex","sunrise","sunset","dewPoint",
+            "airQualityIndex","pm2_5","pm10","co","no2","o3",
+            "pollenCount","fog"
         ];
 
-        const dashboard = document.getElementById('dashboard');
+        const iconMap = {
+            currentTemperature: 'fa-thermometer-half',
+            feelsLike: 'fa-thermometer-half',
+                tempMin: 'fa-thermometer-quarter',
+                tempMax: 'fa-thermometer-full',
+            humidity: 'fa-tint',
+            sunset: 'fa-moon',
+            visibility: 'fa-eye',
+            dewPoint: 'fa-thermometer-quarter',
+            airQualityIndex: 'fa-smog',
+            pm10: 'fa-filter',
+            pm2_5: 'fa-filter',
+            co: 'fa-flask',
+            no2: 'fa-flask',
+            o3: 'fa-sun',
+            pollenCount: 'fa-leaf',
+            pressureTrend: 'fa-chart-line',
+            fog: 'fa-water'
+        };
+
+        // Human readable labels and units
+        const labelMap = {
+            currentTemperature: 'Temperatur',
+            feelsLike: 'Gefühlt',
+            tempMin: 'Min Temp',
+            tempMax: 'Max Temp',
+            humidity: 'Luftfeuchte',
+            pressure: 'Luftdruck',
+            pressureTrend: 'Drucktrend',
+            weatherDescription: 'Beschreibung',
+            cloudCoverage: 'Bewölkung',
+            rain1h: 'Regen (1h)',
+            rain3h: 'Regen (3h)',
+            snow1h: 'Schnee (1h)',
+            snow3h: 'Schnee (3h)',
+            windSpeed: 'Wind',
+            windGust: 'Windböe',
+            windDirection: 'Windrichtung',
+            uvIndex: 'UV-Index',
+            sunrise: 'Sonnenaufgang',
+            sunset: 'Sonnenuntergang',
+            visibility: 'Sichtweite',
+            dewPoint: 'Taupunkt',
+            airQualityIndex: 'Luftqualität',
+            pm10: 'PM10',
+            pm2_5: 'PM2.5',
+            co: 'CO',
+            no2: 'NO2',
+            o3: 'O3',
+            pollenCount: 'Pollen',
+            fog: 'Nebel'
+        };
+
+        const unitMap = {
+            currentTemperature: '°C',
+            feelsLike: '°C',
+            tempMin: '°C',
+            tempMax: '°C',
+            humidity: '%',
+            pressure: 'hPa',
+            pressureTrend: '',
+            weatherDescription: '',
+            cloudCoverage: '%',
+            rain1h: 'mm',
+            rain3h: 'mm',
+            snow1h: 'mm',
+            snow3h: 'mm',
+            windSpeed: 'km/h',
+            windGust: 'km/h',
+            windDirection: '°',
+            uvIndex: '',
+            sunrise: '',
+            sunset: '',
+            visibility: 'm',
+            dewPoint: '°C',
+            airQualityIndex: 'AQI',
+            pm10: 'µg/m³',
+            pm2_5: 'µg/m³',
+            co: 'ppm',
+            no2: 'ppb',
+            o3: 'ppb',
+            pollenCount: '',
+            fog: ''
+        };
+
+        // Color series for cards (bunt)
+        const colors = [
+            '#ff6b6b', // red
+            '#ffd93d', // yellow
+            '#6bcB77', // green
+            '#6b8cff', // blue
+            '#a368ff', // violet
+            '#ff8b6b', // orange
+            '#42d392', // mint
+            '#7dd3fc', // cyan
+            '#f0a6ff', // pink
+            '#ff8bd1'  // rose
+        ];
 
         // Erstelle Blöcke für alle Variablen
         const elements = {};
-        weatherVars.forEach(v => {
+        weatherVars.forEach((v, idx) => {
             const block = document.createElement('div');
             block.className = "weather-block";
-            block.innerHTML = `<strong>${v}:</strong> <span id="${v}">--</span>`;
+            // assign a color from list
+            const color = colors[idx % colors.length];
+            // set color on title only via CSS variable (card background stays the same dark color)
+            block.style.setProperty('--title-bg', color);
+            const iconClass = iconMap[v] || 'fa-square';
+            const label = labelMap[v] || v;
+            const unit = unitMap[v] || '';
+            if (v === 'windDirection') {
+                block.innerHTML = `
+                    <i class="fas ${iconClass} big-icon"></i>
+                    <div class="card-title">${label}</div>
+                    <div class="compass" aria-hidden="true">
+                        <svg class="compass-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2"/>
+                            <line x1="50" y1="6" x2="50" y2="18" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+                            <text x="50" y="20" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="6">N</text>
+                        </svg>
+                        <div class="compass-arrow" id="arrow-${v}"></div>
+                    </div>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
+                `;
+            } else {
+                block.innerHTML = `
+                    <i class="fas ${iconClass} big-icon"></i>
+                    <div class="card-title">${label}</div>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
+                `;
+            }
             dashboard.appendChild(block);
             elements[v] = document.getElementById(v);
+
+            const handle = block.querySelector('.drag-handle');
+            // Make the whole card clickable but avoid clicks starting drag on handle
+            block.dataset.var = v;
+            block.addEventListener('click', (e) => {
+                if (e.target.classList.contains('drag-handle')) return; // ignore clicks on handle
+                openHistory(v);
+            });
+            handle.addEventListener('dragstart', (e) => {
+                draggedItem = block;
+                block.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', ''); } catch (err) {}
+            });
+            handle.addEventListener('dragend', (e) => {
+                draggedItem = null;
+                block.classList.remove('dragging');
+            });
         });
+
+        // DnD reordering (allow dragging via handle)
+        let draggedItem = null;
+        const grid = dashboard;
+        grid.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.weather-block');
+            if (!target || target === draggedItem) return;
+            const rect = target.getBoundingClientRect();
+            const offset = (e.clientX - rect.left) / rect.width;
+            if (offset > 0.5) {
+                if (target.nextSibling !== draggedItem) grid.insertBefore(draggedItem, target.nextSibling);
+            } else {
+                if (target !== draggedItem.nextSibling) grid.insertBefore(draggedItem, target);
+            }
+        });
+
+        // HISTORY MODAL functions
+        const historyOverlay = document.getElementById('historyOverlay');
+        const historyModal = document.getElementById('historyModal');
+        const historyList = document.getElementById('historyList');
+        const historyTitle = document.getElementById('historyTitle');
+        const historyClose = document.getElementById('historyClose');
+
+        function openHistory(variable) {
+            const label = labelMap[variable] || variable;
+            historyTitle.innerText = `${label} Verlauf`;
+            // clear existing
+            historyList.innerHTML = '';
+            // read current value
+            const currentStr = (elements[variable] && elements[variable].innerText) ? elements[variable].innerText : '--';
+            const unit = unitMap[variable] || '';
+            let currentVal = parseFloat(currentStr);
+            // choose a delta size for simple demo
+            const deltaMap = { currentTemperature: 0.6, feelsLike: 0.6, tempMin:0.4, tempMax:0.4, humidity:1, windSpeed:1.2, visibility:100 }; 
+            const step = deltaMap[variable] || 1;
+            for (let hr = -4; hr <= 4; hr++) {
+                const valStr = (!isNaN(currentVal)) ? (currentVal + hr * step).toFixed(1) : currentStr;
+                const item = document.createElement('div');
+                item.style = 'background:#071022; border:1px solid #1e2b3b; padding:8px; border-radius:6px; min-width:48px; text-align:center;';
+                item.innerHTML = `<div style="font-size:12px; opacity:0.6;">${hr}h</div><div style="font-size:20px; font-weight:700;">${valStr}${unit}</div>`;
+                historyList.appendChild(item);
+            }
+            historyOverlay.style.display = 'flex';
+        }
+        function closeHistory() { historyOverlay.style.display = 'none'; }
+        historyClose.addEventListener('click', closeHistory);
+        historyOverlay.addEventListener('click', (e)=> { if (e.target === historyOverlay) closeHistory(); });
 
         // Updates vom Server empfangen
         socket.on('update', data => {
             for (let key in data) {
-                if (elements[key]) {
-                    elements[key].innerText = data[key];
+                if (key === 'city') {
+                    const cityDisplay = document.getElementById('cityDisplay');
+                    if (cityDisplay) cityDisplay.innerText = data.city;
                 }
+                        if (elements[key]) elements[key].innerText = data[key];
+                        if (key === 'windDirection') {
+                            // rotate the compass arrow to the degree value
+                            const arrow = document.getElementById('arrow-windDirection');
+                            const deg = parseFloat(data[key]);
+                            if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
+                        }
             }
         });
 
@@ -49,9 +304,89 @@
             .then(res => res.json())
             .then(data => {
                 for (let key in data) {
+                    if (key === 'city') {
+                        const cityDisplay = document.getElementById('cityDisplay');
+                        if (cityDisplay) cityDisplay.innerText = data.city;
+                    }
                     if (elements[key]) elements[key].innerText = data[key];
+                    if (key === 'windDirection') {
+                        const arrow = document.getElementById('arrow-windDirection');
+                        const deg = parseFloat(data[key]);
+                        if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -100%) rotate(${deg}deg)`;
+                    }
                 }
             });
+
+        // Stadt an Backend senden
+        const cityInput = document.getElementById('cityInput');
+        const cityButton = document.getElementById('cityButton');
+
+        cityButton.addEventListener('click', () => {
+            const city = cityInput.value.trim();
+            if (city !== "") {
+                socket.emit('cityInput', { city: city });
+                cityInput.value = "";
+            }
+        });
+
+        // Optional: Enter-Taste sendet auch
+        cityInput.addEventListener('keydown', (e) => {
+            if (e.key === "Enter") {
+                cityButton.click();
+            }
+        });
+
+        // Menu dropdown (API status & GitHub link)
+        const menuButton = document.getElementById('menuButton');
+        const menuContainer = document.getElementById('menuContainer');
+        const menuDropdown = document.getElementById('menuDropdown');
+        const apiStatus = document.getElementById('apiStatus');
+
+        function openMenu() {
+            menuDropdown.style.display = 'block';
+            menuButton.setAttribute('aria-expanded', 'true');
+            menuDropdown.setAttribute('aria-hidden', 'false');
+        }
+        function closeMenu() {
+            menuDropdown.style.display = 'none';
+            menuButton.setAttribute('aria-expanded', 'false');
+            menuDropdown.setAttribute('aria-hidden', 'true');
+        }
+        menuButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (menuDropdown.style.display === 'block') closeMenu(); else openMenu();
+        });
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!menuContainer.contains(e.target) && menuDropdown.style.display === 'block') closeMenu();
+        });
+        // Close on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMenu();
+        });
+
+        // API status checker
+        async function updateApiStatus() {
+            try {
+                const res = await fetch('/status');
+                if (res.ok) {
+                    apiStatus.innerText = 'Online';
+                    apiStatus.classList.remove('offline');
+                    apiStatus.classList.add('online');
+                } else {
+                    apiStatus.innerText = 'Fehler';
+                    apiStatus.classList.remove('online');
+                    apiStatus.classList.add('offline');
+                }
+            } catch (err) {
+                apiStatus.innerText = 'Offline';
+                apiStatus.classList.remove('online');
+                apiStatus.classList.add('offline');
+            }
+        }
+        // initial check and polling
+        updateApiStatus();
+        setInterval(updateApiStatus, 15000);
     </script>
 </body>
 </html>

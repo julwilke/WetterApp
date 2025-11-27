@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
 import threading
 
@@ -7,10 +7,29 @@ class WeatherDashboard:
         self.app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         self.weather_data = self._create_test_data()
+        self.city = 'Berlin'
 
         @self.app.route('/')
         def index():
             return render_template('index.html')
+
+        @self.app.route('/weather')
+        def weather():
+            payload = {**self.weather_data, 'city': self.city}
+            return jsonify(payload)
+
+        # Event für city vom Frontend
+        @self.socketio.on('cityInput')
+        def handle_city_input(data):
+            city = data.get('city', '')
+            if city:
+                print(f"City empfangen: {city}")
+                self.city = city
+                # inform clients about new city
+                self.socketio.emit('update', {'city': self.city})
+                # Optional: Hier könntest du z.B. eine Funktion aufrufen,
+                # die die Wetterdaten für die Stadt aktualisiert
+                # self.fetch_weather_for_city(city)
 
     def _create_test_data(self):
         return {
@@ -42,7 +61,7 @@ class WeatherDashboard:
             "o3": 40,
             "pollenCount": 0,
             "pressureTrend": "stabil",
-            "fog": False
+            "fog": False,
         }
 
     def update_variable(self, var, val):
@@ -52,8 +71,9 @@ class WeatherDashboard:
             else:
                 self.weather_data[var] = type(self.weather_data[var])(val)
             print(f"{var} aktualisiert: {self.weather_data[var]}")
-            # Push an Frontend
             self.socketio.emit('update', {var: self.weather_data[var]})
+            # also emit current city when values change, helpful for clients
+            self.socketio.emit('update', {'city': self.city})
         else:
             print(f"Variable '{var}' existiert nicht.")
 
