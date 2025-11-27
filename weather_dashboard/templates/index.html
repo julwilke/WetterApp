@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Wetter Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Live Wetterdaten</h1>
+    <div id="dashboard"></div>
+
+    <script>
+        const socket = io();
+
+        const weatherVars = [
+            "currentTemperature","feelsLike","tempMin","tempMax",
+            "humidity","pressure","weatherDescription","cloudCoverage",
+            "rain1h","rain3h","snow1h","snow3h",
+            "windSpeed","windGust","windDirection",
+            "uvIndex","sunrise","sunset","visibility","dewPoint",
+            "airQualityIndex","pm10","pm2_5","co","no2","o3",
+            "pollenCount","pressureTrend","fog"
+        ];
+
+        const dashboard = document.getElementById('dashboard');
+
+        // Erstelle Blöcke für alle Variablen
+        const elements = {};
+        weatherVars.forEach(v => {
+            const block = document.createElement('div');
+            block.className = "weather-block";
+            block.innerHTML = `<strong>${v}:</strong> <span id="${v}">--</span>`;
+            dashboard.appendChild(block);
+            elements[v] = document.getElementById(v);
+        });
+
+        // Updates vom Server empfangen
+        socket.on('update', data => {
+            for (let key in data) {
+                if (elements[key]) {
+                    elements[key].innerText = data[key];
+                }
+            }
+        });
+
+        // Initiale Daten vom Server holen
+        fetch('/weather')
+            .then(res => res.json())
+            .then(data => {
+                for (let key in data) {
+                    if (elements[key]) elements[key].innerText = data[key];
+                }
+            });
+    </script>
+</body>
+</html>
