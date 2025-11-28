@@ -1,13 +1,25 @@
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
 import threading
+import os
+from datetime import datetime
 
 class WeatherDashboard:
+    """
+    WeatherDashboard: Flask + SocketIO wrapper that serves the dashboard
+
+    Responsibilities:
+    - Serve the frontend template (`index.html`) and static assets
+    - Provide a /weather endpoint which returns the current weather payload
+    - Provide a /status endpoint used by the frontend to show API availability
+    - Provide a console for manual variable updates (for demo/testing)
+    """
     def __init__(self, template_folder='templates', static_folder='static'):
         self.app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         self.weather_data = self._create_test_data()
         self.city = 'Berlin'
+        self.last_polled = datetime.utcnow()
 
         @self.app.route('/')
         def index():
@@ -15,8 +27,41 @@ class WeatherDashboard:
 
         @self.app.route('/weather')
         def weather():
+            """
+            REST endpoint: /weather
+            Returns a JSON payload with the current weather values. This endpoint
+            is used by the frontend to initialize the cards and to poll the
+            current weather on page load.
+
+            Side effects:
+            - Update the `last_polled` timestamp for status reporting
+            """
+            # update last_polled each time weather endpoint is requested
+            self.last_polled = datetime.utcnow()
             payload = {**self.weather_data, 'city': self.city}
             return jsonify(payload)
+
+        @self.app.route('/status')
+        def status():
+            """
+            REST endpoint: /status
+            Returns a compact JSON object that holds the application-wide 'status'
+            and the last time weather data was polled. This allows the frontend
+            to render API-specific status indicators with a small payload.
+
+            Example:
+            {
+              "status": "ok",
+              "lastPolled": "2025-11-28T10:41:40.808938Z",
+              "apis": { "openweather": {"status":"ok", "lastPolled":"..."}, ... }
+            }
+            """
+            iso = self.last_polled.isoformat() + 'Z'
+            # Provide per-API statuses where applicable; here we mock two sources
+            return jsonify({'status': 'ok', 'lastPolled': iso, 'apis': {
+                'openweather': {'status': 'ok', 'lastPolled': iso},
+                'meteor': {'status': 'ok', 'lastPolled': iso}
+            }})
 
         # Event für city vom Frontend
         @self.socketio.on('cityInput')
@@ -88,4 +133,7 @@ class WeatherDashboard:
 
     def run(self, host='0.0.0.0', port=5000):
         threading.Thread(target=lambda: self.socketio.run(self.app, host=host, port=port), daemon=True).start()
-        self.start_console()
+        # When running in automated environments, `start_console` blocks waiting
+        # for input. Use NO_CONSOLE=1 to disable the interactive console in tests
+        if os.environ.get('NO_CONSOLE') in [None, '', '0']:
+            self.start_console()
