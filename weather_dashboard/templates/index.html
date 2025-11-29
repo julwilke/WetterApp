@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Dashboard - WetterApp</title>
+    <!-- Bootstrap CSS removed: custom CSS consolidated into /static/styles.css -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+
+<body id="page-top">
+    <div id="wrapper">
+        <!--
+            Sidebar: left navigation containing the brand and links
+            This is the main entry point for the UI and contains app branding
+            and navigation links to switch pages (Dashboard, History, ...)
+            We intentionally keep styling minimal and responsive.
+        -->
+        <nav id="sidebar" class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg p-0">
+            <div class="container-fluid d-flex flex-column p-0"><a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#" style="text-decoration: none;">
+                    <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-cloud-sun"></i></div>
+                    <div class="sidebar-brand-text mx-3"><span>Wetter-App</span></div>
+                </a>
+                <!-- main menu: list of nav items (each has a .nav-link) -->
+                <ul class="navbar-nav text-light" id="accordionSidebar">
+                    <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
+                    <li class="nav-item"><a class="nav-link" href="/history"><i class="fas fa-table"></i><span>Verlauf</span></a></li>
+                </ul>
+                <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
+            </div>
+        </nav>
+        <div class="d-flex flex-column" id="content-wrapper">
+            <div id="content">
+                <nav id="navbar" class="navbar navbar-light navbar-expand shadow mb-4 topbar static-top">
+                    <div class="container-fluid">
+                        <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+                        <form class="d-none d-sm-inline-block me-auto ms-md-3 my-2 my-md-0 mw-100 navbar-search navbar-form" >
+                            <div class="input-group"><input id="cityInput" class="bg-light form-control border-0 small" type="text" placeholder="Suche nach Stadt..."><button id="cityButton" class="btn btn-primary" type="button"><i class="fas fa-search"></i></button></div>
+                        </form>
+                        <ul class="navbar-nav flex-nowrap ms-auto">
+                            <li class="nav-item dropdown no-arrow mx-1">
+                                <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link nav-icon no-arrow" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fab fa-cloudscale fa-fw"></i></a>
+                                            <div class="dropdown-menu dropdown-menu-end bg-dark border-dark dropdown-list animated--grow-in">
+                                                <h6 class="dropdown-header border-dark menu-header" style="margin-top: 0px; color: white">API Status</h6>
+                                                <div class="menu-padding">
+                                                    <!-- apiRows is populated dynamically by updateApiStatus() -->
+                                                    <div id="apiRows" class="api-rows d-flex flex-column" style="gap:10px;">
+                                                        <!-- Populated via JavaScript using /status -> body.apis map -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                </div>
+                            </li>
+                            <li class="nav-item dropdown no-arrow"><a class="nav-link nav-icon" href="https://github.com/julwilke/WetterApp" target="_blank"><i class="fab fa-github"></i></a></li>
+                        </ul>
+                    </div>
+                </nav>
+
+                <div class="container-fluid">
+                    <!-- Page heading + small action button on the right -->
+                    <div class="d-sm-flex justify-content-between align-items-center mb-4">
+                        <h3 class="mb-0" id="cityDisplay">--</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="#"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate Report</a>
+                    </div>
+
+                    <div id="dashboard" class="row">
+                        <!-- Cards are injected into this container via client-side JS.
+                             The script dynamically creates a tile per var listed in
+                             the `weatherVars` array (see script below).
+                             Do not hard-code cards in HTML; the script expects to
+                             find and update elements by ID matching the var names. -->
+                    </div>
+
+                    <!-- additional layout sections could follow (charts etc.) -->
+                </div>
+            </div>
+            <footer class="bg-white sticky-footer">
+                <div class="container my-auto">
+                    <div class="text-center my-auto copyright">Copyright © WetterApp 2025</div>
+                </div>
+            </footer>
+        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyOverlay" class="history-hidden">
+        <div id="historyModal">
+            <div id="historyHeader">
+                <strong id="historyTitle">Verlauf</strong>
+                <button id="historyClose">✕</button>
+            </div>
+            <div id="historyList">
+                <!-- filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- keep project scripts and the inline dashboard script intact -->
+    <script src="/static/js/chart.min.js"></script>
+    <script src="/static/js/bs-init.js"></script>
+    <script src="/static/js/theme.js"></script>
+    <!-- Plotly library and helpers for sun-parabola visualization -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="/static/script.js"></script>
+
+    <script>
+        // Original dashboard script preserved to keep all functions
+        const socket = io();
+
+        const form = document.querySelector('.navbar-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            cityButton.click();
+        });
+
+        // Display order for cards
+        // ------------------------------------------------------------------
+        // This array defines the order and content of dashboard tiles generated
+        // during page initialization. Each key has a label and a mapping to a
+        // visual icon (see `iconMap`) and a unit (see `unitMap`). The creation
+        // loop below will render a tile for every entry here.
+        // ------------------------------------------------------------------
+        const weatherVars = [
+            "currentTemperature","feelsLike","tempMax","tempMin",
+            "humidity","pressure","pressureTrend","windSpeed","windGust","windDirection",
+            "weatherDescription","cloudCoverage","rain1h","rain3h","snow1h","snow3h",
+            "visibility","uvIndex","sunrise","sunset","dewPoint",
+            "airQualityIndex","pm2_5","pm10","co","no2","o3",
+            "pollenCount","fog"
+        ];
+
+        const iconMap = {
+            currentTemperature: 'fa-thermometer-half',
+            feelsLike: 'fa-thermometer-half',
+            tempMin: 'fa-thermometer-quarter',
+            tempMax: 'fa-thermometer-full',
+            humidity: 'fa-tint',
+            pressure: 'fa-tachometer-alt',
+            pressureTrend: 'fa-chart-line',
+            weatherDescription: 'fa-cloud-sun',
+            cloudCoverage: 'fa-cloud',
+            rain1h: 'fa-cloud-showers-heavy',
+            rain3h: 'fa-cloud-showers-heavy',
+            snow1h: 'fa-snowflake',
+            snow3h: 'fa-snowflake',
+            windSpeed: 'fa-wind',
+            windGust: 'fa-wind',
+            windDirection: 'fa-compass',
+            uvIndex: 'fa-sun',
+            sunrise: 'fa-sun',
+            sunset: 'fa-moon',
+            visibility: 'fa-eye',
+            dewPoint: 'fa-thermometer-quarter',
+            airQualityIndex: 'fa-smog',
+            pm10: 'fa-filter',
+            pm2_5: 'fa-filter',
+            co: 'fa-flask',
+            no2: 'fa-flask',
+            o3: 'fa-sun',
+            pollenCount: 'fa-leaf',
+            fog: 'fa-water', 
+            customLargeBlock: 'fa-chart-area'
+        };
+
+        // Human readable labels and units
+        const labelMap = {
+            currentTemperature: 'Temperatur',
+            feelsLike: 'Gefühlt',
+            tempMin: 'Min Temp',
+            tempMax: 'Max Temp',
+            humidity: 'Luftfeuchte',
+            pressure: 'Luftdruck',
+            pressureTrend: 'Drucktrend',
+            weatherDescription: 'Beschreibung',
+            cloudCoverage: 'Bewölkung',
+            rain1h: 'Regen (1h)',
+            rain3h: 'Regen (3h)',
+            snow1h: 'Schnee (1h)',
+            snow3h: 'Schnee (3h)',
+            windSpeed: 'Wind',
+            windGust: 'Windböe',
+            windDirection: 'Windrichtung',
+            uvIndex: 'UV-Index',
+            sunrise: 'Sonnenaufgang',
+            sunset: 'Sonnenuntergang',
+            visibility: 'Sichtweite',
+            dewPoint: 'Taupunkt',
+            airQualityIndex: 'Luftqualität',
+            pm10: 'PM10',
+            pm2_5: 'PM2.5',
+            co: 'CO',
+            no2: 'NO2',
+            o3: 'O3',
+            pollenCount: 'Pollen',
+            fog: 'Nebel', 
+            customLargeBlock: 'Großes Feld'
+        };
+
+        const unitMap = {
+            currentTemperature: '°C',
+            feelsLike: '°C',
+            tempMin: '°C',
+            tempMax: '°C',
+            humidity: '%',
+            pressure: 'hPa',
+            pressureTrend: '',
+            weatherDescription: '',
+            cloudCoverage: '%',
+            rain1h: 'mm',
+            rain3h: 'mm',
+            snow1h: 'mm',
+            snow3h: 'mm',
+            windSpeed: 'km/h',
+            windGust: 'km/h',
+            windDirection: '°',
+            uvIndex: '',
+            sunrise: '',
+            sunset: '',
+            visibility: 'm',
+            dewPoint: '°C',
+            airQualityIndex: 'AQI',
+            pm10: 'µg/m³',
+            pm2_5: 'µg/m³',
+            co: 'ppm',
+            no2: 'ppb',
+            o3: 'ppb',
+            pollenCount: '',
+            fog: ''
+        };
+
+        // Color series for cards (bunt)
+        const colors = [
+            '#ff6b6b', // red
+            '#ffd93d', // yellow
+            '#6bcB77', // green
+            '#6b8cff', // blue
+            '#a368ff', // violet
+            '#ff8b6b', // orange
+            '#42d392', // mint
+            '#7dd3fc', // cyan
+            '#f0a6ff', // pink
+            '#ff8bd1'  // rose
+        ];
+
+        // Small constants
+        const COMPASS_ICON_OFFSET = 45; // degrees to rotate to account for icon's default orientation
+
+        // Erstelle Blöcke für alle Variablen
+        const elements = {};
+        const dashboard = document.getElementById('dashboard');
+        // For each variable, create a dashboard card dynamically. Cards contain
+        // icon, title, a move/drag handle and a `card-value` which will be
+        // updated later either via initial fetch('/weather') or via socket.io.
+        weatherVars.forEach((v, idx) => {
+            // skip creating individual sunrise/sunset blocks - we render a combined block instead
+            if (v === 'sunrise' || v === 'sunset') return;
+            const block = document.createElement('div');
+            block.className = "weather-block";
+            // assign a color from list
+            const color = colors[idx % colors.length];
+            block.style.setProperty('--title-bg', color);
+            const iconClass = iconMap[v] || 'fa-square';
+            const label = labelMap[v] || v;
+            const unit = unitMap[v] || '';
+            if (v === 'windDirection') {
+                block.innerHTML = `
+                    <i class="fas ${iconClass} big-icon"></i>
+                    <div class="card-title">${label}</div>
+                    <div class="compass" aria-hidden="true">
+                        <img class="compass-img" src="/static/images/458-4582952_360-compass-png-png-download-360-degree-compass.png" alt="compass">
+                        <i class="fas fa-location-arrow compass-arrow" id="arrow-${v}" aria-hidden="true"></i>
+                    </div>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
+                `;
+            } else if (v === 'sunrise' || v === 'sunset') {
+                // handled by combined sun-arc block, skip
+                return;
+            } else {
+                block.innerHTML = `
+                    <i class="fas ${iconClass} big-icon"></i>
+                    <div class="card-title">${label}</div>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
+                `;
+            }
+            dashboard.appendChild(block);
+            elements[v] = document.getElementById(v);
+
+            const handle = block.querySelector('.drag-handle');
+            block.dataset.var = v;
+            // Open the history dialog when a tile is clicked. We ignore clicks
+            // on the drag-handle itself so drag events can work as expected.
+            block.addEventListener('click', (e) => {
+                if (e.target.classList.contains('drag-handle')) return;
+                openHistory(v);
+            });
+            handle.addEventListener('dragstart', (e) => {
+                draggedItem = block;
+                block.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', ''); } catch (err) {}
+            });
+            handle.addEventListener('dragend', (e) => {
+                draggedItem = null;
+                block.classList.remove('dragging');
+            });
+        });
+
+        // Insert a custom 3x3 block (title-only, no value)
+        (function createLargeBlock(){
+            const block = document.createElement('div');
+            block.className = 'weather-block big-block';
+            block.dataset.var = 'customLargeBlock';
+            // Color / --title-bg usage to keep look uniform
+            const color = colors[2 % colors.length];
+            block.style.setProperty('--title-bg', color);
+            block.innerHTML = `
+                <i class="fas fa-chart-area big-icon"></i>
+                <div class="card-title">Großes Feld</div>
+                <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                <div class="card-value"><span id="customLargeBlock" class="value"></span><span class="unit"></span></div>
+            `;
+            dashboard.appendChild(block);
+            elements['customLargeBlock'] = document.getElementById('customLargeBlock');
+            // Make the block draggable like the others
+            const handle = block.querySelector('.drag-handle');
+            handle.addEventListener('dragstart', (e) => { draggedItem = block; block.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch(err){} });
+            handle.addEventListener('dragend', (e) => { draggedItem = null; block.classList.remove('dragging'); });
+            // clicking the block should open an empty history modal (no value) for now
+            block.addEventListener('click', (e) => { if (e.target.classList.contains('drag-handle')) return; openHistory('customLargeBlock'); });
+        })();
+
+        // Create combined Sun Arc block (sunrise + sunset + arc)
+        (function createSunArcBlock(){
+            const block = document.createElement('div');
+            block.className = 'weather-block sun-arc-block';
+            block.dataset.var = 'sunArc';
+            const color = colors[1 % colors.length];
+            block.style.setProperty('--title-bg', color);
+            block.innerHTML = `
+                <i class="fas fa-sun big-icon"></i>
+                <div class="card-title">Sonnenverlauf</div>
+                <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                <div id="sunArcPlot" class="sun-plot" aria-hidden="true"></div>
+                <div class="sun-legend">
+                    <div class="sun-legend-left"><div class="sun-legend-label">Aufgang</div><div id="sunrise" class="value">--</div></div>
+                    <div class="sun-legend-right"><div class="sun-legend-label">Untergang</div><div id="sunset" class="value">--</div></div>
+                </div>
+            `;
+            dashboard.appendChild(block);
+            elements['sunrise'] = document.getElementById('sunrise');
+            elements['sunset'] = document.getElementById('sunset');
+            // add drag handlers
+            const handle = block.querySelector('.drag-handle');
+            handle.addEventListener('dragstart', (e) => { draggedItem = block; block.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch(err){} });
+            handle.addEventListener('dragend', (e) => { draggedItem = null; block.classList.remove('dragging'); });
+            block.addEventListener('click', (e) => { if (e.target.classList.contains('drag-handle')) return; openHistory('sunArc'); });
+        })();
+
+        // DnD reordering
+        // --------------------------------------------------------------
+        // The grid uses HTML5 drag-and-drop on the `drag-handle` element.
+        // Dragging inserts the dragged node before/after the hovered node,
+        // enabling re-ordering of dashboard cards.
+        // Note: This is a basic example; in production you'd also persist the
+        // layout to localStorage or a backend so the positions remain stable.
+        let draggedItem = null;
+        const grid = dashboard;
+        grid.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const target = e.target.closest('.weather-block');
+            if (!target || target === draggedItem) return;
+            const rect = target.getBoundingClientRect();
+            const offset = (e.clientX - rect.left) / rect.width;
+            if (offset > 0.5) {
+                if (target.nextSibling !== draggedItem) grid.insertBefore(draggedItem, target.nextSibling);
+            } else {
+                if (target !== draggedItem.nextSibling) grid.insertBefore(draggedItem, target);
+            }
+        });
+
+        // HISTORY MODAL functions
+        const historyOverlay = document.getElementById('historyOverlay');
+        const historyModal = document.getElementById('historyModal');
+        const historyList = document.getElementById('historyList');
+        const historyTitle = document.getElementById('historyTitle');
+        const historyClose = document.getElementById('historyClose');
+
+        function openHistory(variable) {
+            const label = labelMap[variable] || variable;
+            historyTitle.innerText = `${label} Verlauf`;
+            historyList.innerHTML = '';
+            const currentStr = (elements[variable] && elements[variable].innerText) ? elements[variable].innerText : '--';
+            const unit = unitMap[variable] || '';
+            let currentVal = parseFloat(currentStr);
+            const deltaMap = { currentTemperature: 0.6, feelsLike: 0.6, tempMin:0.4, tempMax:0.4, humidity:1, windSpeed:1.2, visibility:100 };
+            const step = deltaMap[variable] || 1;
+            for (let hr = -4; hr <= 4; hr++) {
+                const valStr = (!isNaN(currentVal)) ? (currentVal + hr * step).toFixed(1) : currentStr;
+                const item = document.createElement('div');
+                item.classList.add('history-item');
+                item.innerHTML = `<div class="history-time">${hr}h</div><div class="history-value">${valStr}${unit}</div>`;
+                historyList.appendChild(item);
+            }
+            historyOverlay.classList.remove('history-hidden');
+            historyOverlay.classList.add('history-show');
+        }
+        function closeHistory() { historyOverlay.classList.remove('history-show'); historyOverlay.classList.add('history-hidden'); }
+        historyClose.addEventListener('click', closeHistory);
+        historyOverlay.addEventListener('click', (e)=> { if (e.target === historyOverlay) closeHistory(); });
+
+        // Updates vom Server empfangen
+        socket.on('update', data => {
+            for (let key in data) {
+                if (key === 'city') {
+                    const cityDisplay = document.getElementById('cityDisplay');
+                    if (cityDisplay) cityDisplay.innerText = data.city;
+                }
+                if (elements[key]) elements[key].innerText = data[key];
+                if (key === 'windDirection') {
+                    const arrow = document.getElementById('arrow-windDirection');
+                    const deg = parseFloat(data[key]);
+                        if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
+                }
+            }
+            // update any sun-parabola plots when sunrise/sunset change
+            if (typeof window.generatePlot === 'function') window.generatePlot();
+        });
+
+        // Initiale Daten vom Server holen
+        fetch('/weather')
+            .then(res => res.json())
+            .then(data => {
+                for (let key in data) {
+                    if (key === 'city') {
+                        const cityDisplay = document.getElementById('cityDisplay');
+                        if (cityDisplay) cityDisplay.innerText = data.city;
+                    }
+                    if (elements[key]) elements[key].innerText = data[key];
+                    if (key === 'windDirection') {
+                        const arrow = document.getElementById('arrow-windDirection');
+                        const deg = parseFloat(data[key]);
+                        if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
+                    }
+                }
+                if (typeof window.generatePlot === 'function') window.generatePlot();
+            });
+
+        // Stadt an Backend senden
+        const cityInput = document.getElementById('cityInput');
+        const cityButton = document.getElementById('cityButton');
+
+        cityButton.addEventListener('click', () => {
+            const city = cityInput.value.trim();
+            if (city !== "") {
+                socket.emit('cityInput', { city: city });
+                cityInput.value = "";
+            }
+        });
+
+        cityInput.addEventListener('keydown', (e) => {
+            if (e.key === "Enter") {
+                cityButton.click();
+            }
+        });
+
+        // Menu logic (small)
+        function formatRelativeTime(ts) {
+            if (!ts) return '—';
+            let date;
+            if (typeof ts === 'number') date = new Date(ts * 1000);
+            else date = new Date(ts);
+            if (isNaN(date.getTime())) return '—';
+            const diffSec = Math.round((Date.now() - date.getTime()) / 1000);
+            if (diffSec < 60) return `${diffSec}s`;
+            const diffMin = Math.round(diffSec / 60);
+            if (diffMin < 60) return `${diffMin}m`;
+            const diffHour = Math.round(diffMin / 60);
+            if (diffHour < 24) return `${diffHour}std`;
+            const diffDays = Math.round(diffHour / 24);
+            return `${diffDays}d`;
+        }
+        async function updateApiStatus() {
+            try {
+                const res = await fetch('/status');
+                // no global apiStatus; create dynamic per-api rows in #apiRows
+                const apiRows = document.getElementById('apiRows');
+                const API_ICON_MAP = { 'openweather': '/static/images/icon.svg', 'meteor': '/static/images/logo_white_cropped.png' };
+                if (res.ok) {
+                    // read optional JSON body
+                    let body = null;
+                    try { body = await res.json(); } catch (e) { body = null; }
+                    console.debug('Status: OK');
+                    // update per-api statuses if present
+                    if (body && body.apis) {
+                        // build/update a row for each API in the response
+                        Object.keys(body.apis).forEach(k => {
+                            const a = body.apis[k];
+                            // Attempt to find an existing row for the API
+                            let row = apiRows.querySelector(`.api-row[data-api="${k}"]`);
+                            if (!row) {
+                                row = document.createElement('div');
+                                row.className = 'api-row d-flex align-items-center';
+                                row.dataset.api = k;
+                                row.innerHTML = `
+                                    <div class="api-icon-wrap">
+                                        <img src="${API_ICON_MAP[k] || '/static/images/icon.svg'}" class="api-icon" onerror="this.src='/static/images/icon.svg'" alt="${k}">
+                                        <span class="status-dot offline"></span>
+                                    </div>
+                                    <div class="api-meta d-flex flex-column" style="margin-left:12px;">
+                                        <div class="api-status-text"><span class="api-status">—</span></div>
+                                        <div class="api-lastpolled api-last">—</div>
+                                    </div>
+                                `;
+                                apiRows.appendChild(row);
+                            }
+                            const dot = row.querySelector('.status-dot');
+                            const last = row.querySelector('.api-last');
+                            const statusNode = row.querySelector('.api-status');
+                            if (a.status === 'ok') {
+                                dot.classList.remove('offline', 'error'); dot.classList.add('ok');
+                                statusNode.innerText = 'OK'; statusNode.classList.remove('error'); statusNode.classList.add('ok');
+                            } else {
+                                dot.classList.remove('offline', 'ok'); dot.classList.add('error');
+                                statusNode.innerText = 'ERROR'; statusNode.classList.remove('ok'); statusNode.classList.add('error');
+                            }
+                            if (last) last.innerText = a.lastPolled ? formatRelativeTime(a.lastPolled) : '—';
+                        });
+                        // remove any rows for APIs that no longer exist in the response
+                        Array.from(apiRows.querySelectorAll('.api-row')).forEach(r => {
+                            const nm = r.dataset.api;
+                            if (!body.apis[nm]) r.remove();
+                        });
+                    } else if (body && body.lastPolled) {
+                        const txt = formatRelativeTime(body.lastPolled);
+                        // update all rows existing in the menu
+                        apiRows.querySelectorAll('.api-row').forEach(r => {
+                            const last = r.querySelector('.api-last');
+                            if (last) last.innerText = txt;
+                        });
+                    } else {
+                        apiRows.querySelectorAll('.api-row').forEach(r => {
+                            const last = r.querySelector('.api-last');
+                            if (last) last.innerText = 'gerade eben';
+                        });
+                    }
+                } else {
+                    let body = null;
+                    try { body = await res.json(); } catch (e) { body = null; }
+                    console.debug('Status: ERROR');
+                    // mark all available rows as error
+                    apiRows.querySelectorAll('.api-row').forEach(r => {
+                        const dot = r.querySelector('.status-dot');
+                        const last = r.querySelector('.api-last');
+                        const statusNode = r.querySelector('.api-status');
+                        if (dot) { dot.classList.remove('ok'); dot.classList.add('error'); }
+                        if (statusNode) { statusNode.innerText = 'ERROR'; statusNode.classList.remove('ok'); statusNode.classList.add('error'); }
+                        if (last) last.innerText = (body && body.lastPolled) ? formatRelativeTime(body.lastPolled) : '—';
+                    });
+                }
+            } catch (err) {
+                // mark per-apis as offline on error
+                apiRows.querySelectorAll('.api-row').forEach(r => {
+                    const dot = r.querySelector('.status-dot');
+                    const last = r.querySelector('.api-last');
+                    const statusNode = r.querySelector('.api-status');
+                    if (dot) { dot.classList.remove('ok'); dot.classList.add('offline'); }
+                    if (statusNode) { statusNode.innerText = '—'; statusNode.classList.remove('ok', 'error'); }
+                    if (last) last.innerText = '—';
+                });
+            }
+        }
+        updateApiStatus();
+        setInterval(updateApiStatus, 15000);
+    </script>
+</body>
+
+</html>
