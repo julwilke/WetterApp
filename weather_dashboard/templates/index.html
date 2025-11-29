@@ -110,6 +110,12 @@
         // Original dashboard script preserved to keep all functions
         const socket = io();
 
+        const form = document.querySelector('.navbar-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            cityButton.click();
+        });
+
         // Display order for cards
         // ------------------------------------------------------------------
         // This array defines the order and content of dashboard tiles generated
