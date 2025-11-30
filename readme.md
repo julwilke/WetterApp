@@ -1,106 +1,73 @@
-# Stadeingabe
+# WetterApp 🌦️
 
-| Anzeigename              | Variablenname        |
-| ------------------------ | -------------------- |
-| Stadt                    | `city`               |
+Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI".
 
-# Wetterdaten (vom Backend an das Frontend übergeben)
+## 📋 Projektbeschreibung
 
-Die folgenden Variablen werden aktuell vom Backend an das Frontend übergeben und im Dashboard angezeigt. Die Spalte JSON-Feldname gibt an, aus welchem OpenWeatherMap-Feld (oder vergleichbaren Quellen) der Wert üblicherweise kommt.
+Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wetterdaten. Das Projekt startet mit einem einfachen Skript zum Abrufen aktueller Wetterdaten per API für eine gegebene Postleitzahl und wird schrittweise um weitere Features erweitert.
 
-| Anzeigename              | Variablenname        | JSON-Feldname / API      | Einheit / Beschreibung                              | Quelle                           |
-| ------------------------ | -------------------- | ------------------------ | --------------------------------------------------- | -------------------------------- |
-| Stadt                    | `city`               | –                        | Anzeigename / Query-String                           | Backend                           |
-| Aktuelle Temperatur      | `currentTemperature` | `main.temp`              | °C                                                  | OpenWeatherMap / Backend         |
-| Gefühlt wie              | `feelsLike`          | `main.feels_like`        | °C                                                  | OpenWeatherMap / Backend         |
-| Minimum Temperatur       | `tempMin`            | `main.temp_min`          | °C                                                  | OpenWeatherMap / Backend         |
-| Maximum Temperatur       | `tempMax`            | `main.temp_max`          | °C                                                  | OpenWeatherMap / Backend         |
-| Luftfeuchtigkeit         | `humidity`           | `main.humidity`          | %                                                   | OpenWeatherMap / Backend         |
-| Luftdruck                | `pressure`           | `main.pressure`          | hPa                                                 | OpenWeatherMap / Backend         |
-| Wetterbeschreibung       | `weatherDescription` | `weather[0].description` | Text                                                | OpenWeatherMap / Backend         |
-| Wolkenbedeckung          | `cloudCoverage`      | `clouds.all`             | %                                                   | OpenWeatherMap / Backend         |
-| Niederschlag (1h)        | `rain1h`             | `rain.1h`                | mm                                                  | OpenWeatherMap / Backend         |
-| Niederschlag (3h)        | `rain3h`             | `rain.3h`                | mm                                                  | OpenWeatherMap / Backend         |
-| Schnee (1h)              | `snow1h`             | `snow.1h`                | mm                                                  | OpenWeatherMap / Backend         |
-| Schnee (3h)              | `snow3h`             | `snow.3h`                | mm                                                  | OpenWeatherMap / Backend         |
-| Windgeschwindigkeit      | `windSpeed`          | `wind.speed`             | km/h (oder m/s, je nach Umrechnung)                 | OpenWeatherMap / Backend         |
-| Windböen                 | `windGust`           | `wind.gust`              | km/h (oder m/s, je nach Umrechnung)                 | OpenWeatherMap / Backend         |
-| Windrichtung             | `windDirection`      | `wind.deg`               | °                                                   | OpenWeatherMap / Backend         |
-| UV-Index                 | `uvIndex`            | `uvi`                    | Index                                               | OpenWeatherMap / Backend         |
-| Sonnenaufgang            | `sunrise`            | `sys.sunrise`            | Uhrzeit oder Timestamp (je nach Implementierung)    | OpenWeatherMap / Backend         |
-| Sonnenuntergang          | `sunset`             | `sys.sunset`             | Uhrzeit oder Timestamp (je nach Implementierung)    | OpenWeatherMap / Backend         |
-| Sichtweite               | `visibility`         | `visibility`             | m                                                   | OpenWeatherMap / Backend         |
-| Taupunkt                 | `dewPoint`           | `main.dew_point`*        | °C (optional, ggf. aus Temp+Feuchtigkeit berechnen) | OpenWeatherMap / Backend         |
-| Luftqualitätsindex       | `airQualityIndex`    | `aqi`                    | Index                                               | Air-Pollution API / Backend      |
-| PM10                     | `pm10`               | `components.pm10`        | µg/m³                                               | Air-Pollution API / Backend      |
-| PM2.5                    | `pm2_5`              | `components.pm2_5`       | µg/m³                                               | Air-Pollution API / Backend      |
-| CO                       | `co`                 | `components.co`          | µg/m³ or ppm (API abhängig)                         | Air-Pollution API / Backend      |
-| NO2                      | `no2`                | `components.no2`         | µg/m³                                               | Air-Pollution API / Backend      |
-| O3                       | `o3`                 | `components.o3`          | µg/m³                                               | Air-Pollution API / Backend      |
-| Pollen (optional)        | `pollenCount`        | `pollen`                 | Anzahl pro m³ (API abhängig)                        | Pollen API / Backend             |
-| Luftdrucktrend           | `pressureTrend`      | berechnet / custom       | steigend/fallend                                    | Backend (berechnet)              |
-| Nebel / Sichtbehinderung | `fog` / `mist`       | `weather[0].id`          | anhand ID interpretieren                            | OpenWeatherMap / Backend         |
+Das Ziel ist eine benutzerfreundliche und erweiterbare WebApp mit vielen üblichen Funktionen der Darstellung von Wetter Daten.
 
+## 🎯 Projektziele
 
-# Status API
-| Endpoint | Rückgabe-Felder | Beschreibung |
-| -------- | --------------- | ------------ |
-| `/status` | `status` (z. B. `ok`), `lastPolled` (ISO 8601 UTC Zeitstempel) | Liefert einen kleinen Status-Block, der vom Frontend verwendet wird, um Online/Offline-Zustand und die letzte Abfragezeit darzustellen. |
+- **Phase 1**: 
+    - ✅ Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
+    - ✅ Grundlegende WebApp entwickeln
+    - [ ] Abgabefertig und bewertbare Lösung fertigstellen
+- **Phase 2**: 
+    - [ ] Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
+    - [ ] Persistenz ausgewählter Daten
+    - [ ] Logging, Debugging, Test-Funktionen einbauen
+- **Phase 3**: 
+    - [ ] Integration von KI-Funktionen (eigene Vorhersagen, Mustererkennung, Anomalien (z.B. "ungewöhnlich warmer Dezember")
+- **Phase 4**: Finalisierung
+    - [ ] Code-Refactoring / Hardening
+    - [ ] docs / configs / README.MD finalisieren
 
-Zusätzlich liefert `/status` nun auch ein Objekt `apis`, in dem pro konfigurierter API der Status und `lastPolled` enthalten sind.
+## 🛠️ Installation & Verwendung 
 
-Beispiel:
+```bash
+# Repository klonen
+git clone https://github.com/julwilke/WetterApp.git
+cd WetterApp
 
-```json
-{
-	"status": "ok",
-	"lastPolled": "2025-11-28T10:41:40.808938Z",
-	"apis": {
-		"openweather": { "status": "ok", "lastPolled": "2025-11-28T10:41:40.808938Z" },
-		"meteor": { "status": "error", "lastPolled": "2025-11-28T08:12:32.000000Z" }
-	}
-}
+# Virtuelle Umgebung erstellen
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Dependencies installieren
+pip install -r requirements.txt
+
+# Skript ausführen
+python app.py
 ```
 
-Hinweis: `lastPolled` wird in der UI als relative Zeit dargestellt (z. B. `45s`, `4m`, `2std`, `3d`).
+## 📦 Technology-Stack
 
-## Beispiel JSON für `/weather`
-Das Backend liefert typischerweise ein JSON mit allen sichtbaren Feldern für das Dashboard. Hier ein Beispiel (vereinfachte Ausgabe mit Testwerten):
+- **Sprache**: Python 3.10+ (prüfen!)
+- **API**: OpenWeatherMap, 
+- **Libraries**: folgen
+- **Zukünftig**: folgen
 
-```json
-{
-	"city": "Berlin",
-	"currentTemperature": 20.0,
-	"feelsLike": 20.0,
-	"tempMin": 15.0,
-	"tempMax": 25.0,
-	"humidity": 50,
-	"pressure": 1013,
-	"weatherDescription": "klar",
-	"cloudCoverage": 0,
-	"rain1h": 0,
-	"rain3h": 0,
-	"snow1h": 0,
-	"snow3h": 0,
-	"windSpeed": 5,
-	"windGust": 7,
-	"windDirection": 90,
-	"uvIndex": 3,
-	"sunrise": "06:30",
-	"sunset": "18:30",
-	"visibility": 10000,
-	"dewPoint": 10,
-	"airQualityIndex": 50,
-	"pm10": 20,
-	"pm2_5": 10,
-	"co": 0.3,
-	"no2": 15,
-	"o3": 40,
-	"pollenCount": 0,
-	"pressureTrend": "stabil",
-	"fog": false
-}
-```
+## 👥 Team
 
-Hinweis: Die Felder `sunrise` und `sunset` können je nach Backend-Implementierung als Uhrzeit-Strings (z. B. `"06:30"`) oder Unix-Timestamps übergeben werden. Das Frontend unterstützt derzeit einfache `HH:MM`-Strings sowie Dezimalstunden. Bei anderen Formaten (z. B. rohe UTC-Timestamps) müsste das Backend konvertiert oder das Frontend entsprechend angepasst werden.
+- Adham
+- Tugba 
+- Nick-Andre
+- Julian
 
+## 📝 Notizen
+
+- Meeting-Protokolle im `/docs` Ordner
+- Branch-Strategie: Private-Branches → Main
+
+---
+
+## 📄 License
+
+AGPLv3 — see LICENSE file for full terms.
+© 2025 (PKI Gruppe B1-3)
+
+---
+
+**Letzte Aktualisierung**: 30.11.2025
