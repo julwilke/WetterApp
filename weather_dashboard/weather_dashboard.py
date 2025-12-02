@@ -149,7 +149,7 @@ class WeatherDashboard:
             "windDirection": 110,
             "uvIndex": 4,
             "sunrise": "06:32",
-            "sunset": "18:45",
+            "sunset": "17:45",
             "visibility": 10000,
             "dewPoint": 11,
             "airQualityIndex": 45,

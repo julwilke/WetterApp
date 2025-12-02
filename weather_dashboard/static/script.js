@@ -61,7 +61,8 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             let t = (h - sunriseTime) / totalHours;
             let angle = sunriseAngle * (1 - t);
             xValues.push(Math.cos(angle));
-            yValues.push(Math.sin(angle));
+            yValues.push(Math.sin(angle) * 0.75); // streckt/komprimiert vertikal
+
         }
 
             // Helper to convert an hour value to x,y on the unit semicircle arc
@@ -70,7 +71,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             if (t < 0) t = 0;
             if (t > 1) t = 1;
             const angle = sunriseAngle * (1 - t);
-            return { x: Math.cos(angle), y: Math.sin(angle) };
+            return { x: Math.cos(angle), y: Math.sin(angle) * 0.75 };
         }
 
         // compute markers for sunrise/sunset and current time
@@ -139,7 +140,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
         // Responsive: width based on container
         const width = document.getElementById(containerId) ? document.getElementById(containerId).offsetWidth : 160;
         // make plot more visible by default
-        const height = Math.max(90, Math.round(width * 0.75));
+        const height = Math.max(150, Math.round(width * 0.75));
         console.debug('plot dims', { width, height });
 
         const layout = {
@@ -153,7 +154,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
                 showgrid: false,
                 zeroline: false,
                 showticklabels: false,
-                range: [-0.1, maxY + padding],
+                range: [0, maxY + padding],
                 scaleanchor: "x"
             },
             margin: {l:0, r:0, t:0, b:0},

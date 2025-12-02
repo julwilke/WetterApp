@@ -347,6 +347,7 @@
             const block = document.createElement('div');
             block.className = 'weather-block sun-arc-block';
             block.dataset.var = 'sunArc';
+            block.id = 'sunArcContainer';
             const color = colors[1 % colors.length];
             block.style.setProperty('--title-bg', color);
 

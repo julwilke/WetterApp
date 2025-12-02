@@ -141,6 +141,23 @@ h1 { text-align: center; }
 /* Ensure the cursor doesn't change to cross during hover (no interactions) */
 .sun-plot { cursor: default; }
 
+.plot-container {
+    position: absolute;
+    bottom: 0px;
+}
+
+#sunArcPlot {
+    position: absolute;
+    bottom: 0;       /* am unteren Rand verankern */
+    left: 0;
+    width: 100%;     /* volle Breite des Containers */
+    height: 0px;     /* Höhe des SunArc-Bereichs */
+    margin-bottom: -20%;
+    display: flex;
+    align-items: flex-end;
+}
+
+
 /* Big block (3x3) styles. Keep same look, but span 3 columns and rows */
 .big-block { grid-column: span 3; grid-row: span 3; min-height: calc(3 * 160px + 56px); padding: 28px; border-radius: 16px; }
 .big-block .card-title { font-size: clamp(12px, 1.4vw, 14px); padding: 8px 10px; }
