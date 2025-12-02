@@ -116,7 +116,7 @@ h1 { text-align: center; }
 
 /* Compass styling */
 .compass { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 56%; height: 56%; pointer-events: none; z-index: 2; display:flex; align-items:center; justify-content:center; }
-    .compass-img {  height: 250%; filter: invert(1) opacity(0.5); filter: invert(73%) sepia(21%) saturate(3700%) hue-rotate(290deg) brightness(103%) contrast(102%) opacity(0.5); margin-top: 5px; }
+    .compass-img {  height: 250%; filter: invert(1) opacity(0.5); filter: invert(74%) sepia(80%) saturate(348%) hue-rotate(-10deg) brightness(100%) contrast(100%); margin-top: 5px; }
     .compass-arrow { position: absolute; left: 50%; top: 50%; transform-origin: center center; transform: translate(-50%, -50%) rotate(-45deg); z-index: 3; color: #fff; font-size: clamp(28px, 3.6vw, 48px); line-height: 1; pointer-events: none; }
     .compass-arrow { transition: transform 300ms ease; }
     .compass-arrow::after { display: none; }
