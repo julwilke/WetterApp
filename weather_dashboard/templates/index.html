@@ -92,9 +92,6 @@
                 <strong id="historyTitle">Verlauf</strong>
                 <button id="historyClose">✕</button>
             </div>
-            <div id="historyList">
-                <!-- filled dynamically -->
-            </div>
         </div>
     </div>
 
@@ -107,6 +104,7 @@
     <script src="/static/script.js"></script>
 
     <script>
+
         // Original dashboard script preserved to keep all functions
         const socket = io();
 
@@ -441,71 +439,210 @@
         const historyTitle = document.getElementById('historyTitle');
         const historyClose = document.getElementById('historyClose');
 
+        const historyMap = {
+            "currentTemperature": "currentTemperature_history",
+            "current-temperature": "currentTemperature_history",
+
+            "feelsLike": "feelsLike_history",
+            "feels-like": "feelsLike_history",
+
+            "tempMin": "tempMin_history",
+            "temp-min": "tempMin_history",
+
+            "tempMax": "tempMax_history",
+            "temp-max": "tempMax_history",
+
+            "humidity": "humidity_history",
+            "windSpeed": "windSpeed_history",
+            "wind-speed": "windSpeed_history",
+
+            "pressure": "pressure_history"
+        };
+
         function openHistory(variable) {
             const label = labelMap[variable] || variable;
-            historyTitle.innerText = `${label} Verlauf`;
-            historyList.innerHTML = '';
-            const currentStr = (elements[variable] && elements[variable].innerText) ? elements[variable].innerText : '--';
             const unit = unitMap[variable] || '';
-            let currentVal = parseFloat(currentStr);
-            const deltaMap = { currentTemperature: 0.6, feelsLike: 0.6, tempMin:0.4, tempMax:0.4, humidity:1, windSpeed:1.2, visibility:100 };
-            const step = deltaMap[variable] || 1;
-            for (let hr = -4; hr <= 4; hr++) {
-                const valStr = (!isNaN(currentVal)) ? (currentVal + hr * step).toFixed(1) : currentStr;
-                const item = document.createElement('div');
-                item.classList.add('history-item');
-                item.innerHTML = `<div class="history-time">${hr}h</div><div class="history-value">${valStr}${unit}</div>`;
-                historyList.appendChild(item);
-            }
-            historyOverlay.classList.remove('history-hidden');
-            historyOverlay.classList.add('history-show');
-        }
-        function closeHistory() { historyOverlay.classList.remove('history-show'); historyOverlay.classList.add('history-hidden'); }
-        historyClose.addEventListener('click', closeHistory);
-        historyOverlay.addEventListener('click', (e)=> { if (e.target === historyOverlay) closeHistory(); });
+            const historyKey = variable + "_history";
 
-        // Updates vom Server empfangen
+            fetch('/weather')
+                .then(res => res.json())
+                .then(data => {
+
+                    const container = document.querySelector(`.weather-block[data-var="${variable}"]`);
+                    let color = '#ff5722';
+                    if (container) color = getComputedStyle(container).getPropertyValue('--title-bg').trim() || color;
+
+                    const currentStr = elements[variable]?.innerText || '--';
+                    const currentVal = parseFloat(currentStr);
+
+                    const xValues = [];
+                    const yValues = [];
+
+                    const history = data?.[historyKey];
+
+                    if (history && Array.isArray(history) && history.length > 0) {
+                        history.forEach(item => {
+                            xValues.push(item.hr);
+                            yValues.push(Number(item.value));
+                        });
+
+                        // Plot erstellen
+                        const trace = {
+                            x: xValues,
+                            y: yValues,
+                            mode: "lines+markers",
+                            name: `${label} (${unit})`,
+                            line: { color, width: 3 },
+                            marker: { size: 10, color: color, line: { width: 1, color: "#fff" } }
+                        };
+
+                        const layout = {
+                            title: { text: `${label} Verlauf`, font: { size: 16, color: "white" } },
+                            xaxis: {
+                                title: "Stunden relativ jetzt",
+                                titlefont: { color: "white" },
+                                tickfont: { color: "white" },
+                                tickvals: xValues,
+                                ticktext: xValues.map(hr => `${hr >= 0 ? '+' + hr : hr}h`),
+                                gridcolor: "rgba(255,255,255,0.3)",
+                                zeroline: false
+                            },
+                            yaxis: {
+                                title: `${label} [${unit}]`,
+                                titlefont: { color: "white" },
+                                tickfont: { color: "white" },
+                                gridcolor: "rgba(255,255,255,0.3)",
+                                zeroline: false
+                            },
+                        margin: { t: 50, l: 50, r: 20, b: 50 },
+                        font: { family: "Arial, sans-serif", size: 12 },
+                        plot_bgcolor: "rgba(0,0,0,0)",
+                        paper_bgcolor: "rgba(0,0,0,0)",
+                        showlegend: false
+                        };
+
+                        let plotDiv = document.getElementById('weatherPlot');
+                        if (!plotDiv) {
+                            plotDiv = document.createElement('div');
+                            plotDiv.id = 'weatherPlot';
+                            plotDiv.style.width = '100%';
+                            plotDiv.style.height = '100%';
+                            historyModal.appendChild(plotDiv);
+                        }
+
+                        // Kleine Verzögerung, damit das Div wirklich sichtbar ist
+                        setTimeout(() => {
+                            Plotly.newPlot(plotDiv, [trace], layout, { staticPlot: true, displayModeBar: false, responsive: true });
+                        }, 5); // 5ms reicht meist
+
+                        Plotly.newPlot(plotDiv, [trace], layout, { staticPlot: true, displayModeBar: false, responsive: true });
+
+                    } else {
+                        // Keine Historie → Text anzeigen
+                        let plotDiv = document.getElementById('weatherPlot');
+                        if (!plotDiv) {
+                            plotDiv = document.createElement('div');
+                            plotDiv.id = 'weatherPlot';
+                            plotDiv.style.width = '100%';
+                            plotDiv.style.height = '100%';
+                            plotDiv.style.display = 'flex';
+                            plotDiv.style.alignItems = 'center';
+                            plotDiv.style.justifyContent = 'center';
+                            plotDiv.style.color = 'white';
+                            plotDiv.style.fontSize = '16px';
+                            historyModal.appendChild(plotDiv);
+                        }
+                        plotDiv.innerText = '⚠️ Keine Daten verfügbar';
+                    }
+
+                    // Overlay anzeigen
+                    historyOverlay.classList.remove('history-hidden');
+                    historyOverlay.classList.add('history-show');
+                });
+        }
+
+        function closeHistory() { historyOverlay.classList.remove('history-show'); historyOverlay.classList.add('history-hidden'); }
+            historyClose.addEventListener('click', closeHistory);
+            historyOverlay.addEventListener('click', (e)=> { if (e.target === historyOverlay) closeHistory(); });
+
+
+        // Updates vom Server empfangen (SocketIO)
         socket.on('update', data => {
+            console.log("🔔 Update vom Server:", data);
+
             for (let key in data) {
+                // City anzeigen
                 if (key === 'city') {
                     const cityDisplay = document.getElementById('cityDisplay');
                     if (cityDisplay) cityDisplay.innerText = data.city;
 
-                    // Karte neu laden, wenn sich die Stadt ändert
+                    // Karte neu laden
                     const iframe = document.getElementById('customLargeBlockMapIframe');
                     if (iframe) {
-                        const src = iframe.src.split('?')[0]; // Basis-URL ohne Query
-                        iframe.src = `${src}?ts=${new Date().getTime()}`; // Cache-Busting
+                        const src = iframe.src.split('?')[0];
+                        iframe.src = `${src}?ts=${new Date().getTime()}`;
                     }
                 }
 
-                if (elements[key]) elements[key].innerText = data[key];
-
+                // Spezialfall: windDirection
                 if (key === 'windDirection') {
                     const arrow = document.getElementById('arrow-windDirection');
                     const deg = parseFloat(data[key]);
                     if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
                 }
+
+                // Spezialfälle: sunrise & sunset → Dezimalstunden
+                if (key === 'sunrise' || key === 'sunset') {
+                    const timeStr = data[key];
+                    if (timeStr) {
+                        const [h, m] = timeStr.split(':').map(Number);
+                        window[key] = h + m / 60; // z.B. window.sunrise, window.sunset
+                    }
+                }
+
+                // Standard: alle Elemente aktualisieren
+                if (elements[key]) {
+                    elements[key].innerText = data[key];
+                }
             }
+
+            // Optional: Plot neu erzeugen, wenn Funktion existiert
+            if (typeof window.generatePlot === 'function') window.generatePlot();
         });
 
-
-        // Initiale Daten vom Server holen
+        // Initiale Daten vom Server holen (fetch)
         fetch('/weather')
             .then(res => res.json())
             .then(data => {
+                console.log("📦 Initiale Wetterdaten:", data);
+
                 for (let key in data) {
+                    // City
                     if (key === 'city') {
                         const cityDisplay = document.getElementById('cityDisplay');
                         if (cityDisplay) cityDisplay.innerText = data.city;
                     }
-                    if (elements[key]) elements[key].innerText = data[key];
+
+                    // windDirection
                     if (key === 'windDirection') {
                         const arrow = document.getElementById('arrow-windDirection');
                         const deg = parseFloat(data[key]);
                         if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
                     }
+
+                    // sunrise & sunset
+                    if (key === 'sunrise' || key === 'sunset') {
+                        const timeStr = data[key];
+                        if (timeStr) {
+                            const [h, m] = timeStr.split(':').map(Number);
+                            window[key] = h + m / 60;
+                        }
+                    }
+
+                    // Alle anderen Elemente
+                    if (elements[key]) elements[key].innerText = data[key];
                 }
+
                 if (typeof window.generatePlot === 'function') window.generatePlot();
             });
 

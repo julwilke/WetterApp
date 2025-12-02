@@ -15,7 +15,7 @@ class WeatherDashboard:
         self.app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         self.weather_data = self._create_test_data()
-        self.city = 'Berlin'
+        self.city = 'Iserlohn'
         self.last_polled = datetime.utcnow()
 
         # Geolocator für City→Koordinaten
@@ -58,10 +58,8 @@ class WeatherDashboard:
 
                 # An alle Clients senden
                 self.socketio.emit('update', {'city': self.city})
-                self.socketio.emit('update', {
-                    'lat': self.weather_data['lat'],
-                    'lon': self.weather_data['lon']
-                })
+                self.socketio.emit('update', {**self.weather_data, 'city': self.city})
+
 
     # ---------------------------------------------------
     #  TEST-FUNKTION: City → Koordinaten
@@ -76,7 +74,7 @@ class WeatherDashboard:
                 self.weather_data["lon"] = location.longitude
                 print(f"Koordinaten für {city}: {location.latitude}, {location.longitude}")
                 print(location.latitude, location.longitude)
-                generate_map.generate_map(location.latitude, location.longitude)
+                generate_map.generate_map(location.latitude, location.longitude, temp=self.weather_data.get("currentTemperature", "--"))
             else:
                 print(f"Keine Koordinaten gefunden für: {city}")
                 # Fallback: Berlin als Default
@@ -90,38 +88,79 @@ class WeatherDashboard:
         
     def _create_test_data(self):
         return {
-            "currentTemperature": 20,
-            "feelsLike": 20,
-            "tempMin": 15,
-            "tempMax": 25,
-            "humidity": 50,
-            "pressure": 1013,
-            "weatherDescription": "klar",
-            "cloudCoverage": 0,
+            "city": "Berlin",
+            "currentTemperature": 21.2,
+            "currentTemperature_history": [
+                {"hr": -4, "value": 18.3},
+                {"hr": -3, "value": 17.7},
+                {"hr": -2, "value": 19.5},
+                {"hr": -1, "value": 21.6},
+            ],
+            "feelsLike": 21.0,
+            "feelsLike_history": [
+                {"hr": -4, "value": 17.0},
+                {"hr": -3, "value": 18.5},
+                {"hr": -2, "value": 16.2},
+                {"hr": -1, "value": 20.3},
+            ],
+            "tempMin": 15.4,
+            "tempMin_history": [
+                {"hr": -4, "value": 14.8},
+                {"hr": -3, "value": 12.0},
+                {"hr": -2, "value": 15.1},
+                {"hr": -1, "value": 17.3},
+            ],
+            "tempMax": 25.6,
+            "tempMax_history": [
+                {"hr": -4, "value": 25.1},
+                {"hr": -3, "value": 21.0},
+                {"hr": -2, "value": 23.2},
+                {"hr": -1, "value": 25.0},
+            ],
+            "humidity": 52,
+            "humidity_history": [
+                {"hr": -4, "value": 55},
+                {"hr": -3, "value": 63},
+                {"hr": -2, "value": 51},
+                {"hr": -1, "value": 30},
+            ],
+            "lat": 52.5200,
+            "lon": 13.4050,
+            "pressure": 1015,
+            "pressure_history": [
+                {"hr": -4, "value": 1012},
+                {"hr": -3, "value": 1011},
+                {"hr": -2, "value": 1013},
+                {"hr": -1, "value": 1012},
+            ],
+            "weatherDescription": "leicht bewölkt",
+            "cloudCoverage": 20,
             "rain1h": 0,
             "rain3h": 0,
             "snow1h": 0,
             "snow3h": 0,
-            "windSpeed": 5,
-            "windGust": 7,
-            "windDirection": 90,
-            "uvIndex": 3,
-            "sunrise": "06:30",
-            "sunset": "18:30",
+            "windSpeed": 6,
+            "windSpeed_history": [
+                {"hr": -4, "value": 5.4},
+                {"hr": -3, "value": 2.3},
+                {"hr": -2, "value": 5.5},
+                {"hr": -1, "value": 7.1},
+            ],
+            "windDirection": 110,
+            "uvIndex": 4,
+            "sunrise": "06:32",
+            "sunset": "18:45",
             "visibility": 10000,
-            "dewPoint": 10,
-            "airQualityIndex": 50,
-            "pm10": 20,
-            "pm2_5": 10,
-            "co": 0.3,
-            "no2": 15,
-            "o3": 40,
-            "pollenCount": 0,
-            "pressureTrend": "stabil",
-            "fog": False,
-            # neue Felder:
-            "lat": None,
-            "lon": None
+            "dewPoint": 11,
+            "airQualityIndex": 45,
+            "pm10": 18,
+            "pm2_5": 12,
+            "co": 0.4,
+            "no2": 20,
+            "o3": 35,
+            "pollenCount": 5,
+            "pressureTrend": "leicht steigend",
+            "fog": False
         }
 
     def update_variable(self, var, val):
@@ -131,8 +170,9 @@ class WeatherDashboard:
             else:
                 self.weather_data[var] = type(self.weather_data[var])(val)
             print(f"{var} aktualisiert: {self.weather_data[var]}")
-            self.socketio.emit('update', {var: self.weather_data[var]})
-            self.socketio.emit('update', {'city': self.city})
+
+            # Komplette Wetterdaten an alle Clients senden
+            self.socketio.emit('update', {**self.weather_data, 'city': self.city})
         else:
             print(f"Variable '{var}' existiert nicht.")
 
