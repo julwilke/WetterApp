@@ -1,1 +1,0 @@
-# Falls wir mit .csv Daten als persistente Speicherung arbeiten
