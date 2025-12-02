@@ -124,12 +124,44 @@
         // loop below will render a tile for every entry here.
         // ------------------------------------------------------------------
         const weatherVars = [
-            "currentTemperature","feelsLike","tempMax","tempMin",
+            "currentTemperature","feelsLike","map","tempMax","tempMin","sunarc",
             "humidity","pressure","pressureTrend","windSpeed","windGust","windDirection",
             "weatherDescription","cloudCoverage","rain1h","rain3h","snow1h","snow3h",
             "visibility","uvIndex","sunrise","sunset","dewPoint",
             "airQualityIndex","pm2_5","pm10","co","no2","o3",
             "pollenCount","fog"
+        ];
+
+        const blockOrder = [
+            "currentTemperature",
+            "feelsLike",
+            "map",
+            "tempMin",
+            "tempMax",
+            "sunarc",
+            "humidity",
+            "pressure",
+            "pressureTrend",
+            "windSpeed",
+            "windGust",
+            "windDirection",
+            "weatherDescription",
+            "cloudCoverage",
+            "rain1h",
+            "rain3h",
+            "snow1h",
+            "snow3h",
+            "visibility",
+            "uvIndex",
+            "dewPoint",
+            "airQualityIndex",
+            "pm2_5",
+            "pm10",
+            "co",
+            "no2",
+            "o3",
+            "pollenCount",
+            "fog"
         ];
 
         const iconMap = {
@@ -162,7 +194,7 @@
             o3: 'fa-sun',
             pollenCount: 'fa-leaf',
             fog: 'fa-water', 
-            customLargeBlock: 'fa-chart-area'
+            map: 'fa-chart-area'
         };
 
         // Human readable labels and units
@@ -196,7 +228,7 @@
             o3: 'O3',
             pollenCount: 'Pollen',
             fog: 'Nebel', 
-            customLargeBlock: 'Großes Feld'
+            map: 'Karte'
         };
 
         const unitMap = {
@@ -251,20 +283,20 @@
         // Erstelle Blöcke für alle Variablen
         const elements = {};
         const dashboard = document.getElementById('dashboard');
-        // For each variable, create a dashboard card dynamically. Cards contain
-        // icon, title, a move/drag handle and a `card-value` which will be
-        // updated later either via initial fetch('/weather') or via socket.io.
-        weatherVars.forEach((v, idx) => {
-            // skip creating individual sunrise/sunset blocks - we render a combined block instead
-            if (v === 'sunrise' || v === 'sunset') return;
+        let draggedItem = null;
+
+        // 1️⃣ Normale Variablen außer sunrise/sunset/map
+        function createBlock(v, idx) {
             const block = document.createElement('div');
-            block.className = "weather-block";
-            // assign a color from list
+            block.className = 'weather-block';
+            block.dataset.var = v;
             const color = colors[idx % colors.length];
             block.style.setProperty('--title-bg', color);
+
             const iconClass = iconMap[v] || 'fa-square';
             const label = labelMap[v] || v;
             const unit = unitMap[v] || '';
+
             if (v === 'windDirection') {
                 block.innerHTML = `
                     <i class="fas ${iconClass} big-icon"></i>
@@ -273,93 +305,97 @@
                         <img class="compass-img" src="/static/images/458-4582952_360-compass-png-png-download-360-degree-compass.png" alt="compass">
                         <i class="fas fa-location-arrow compass-arrow" id="arrow-${v}" aria-hidden="true"></i>
                     </div>
-                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true"></i>
                     <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
                 `;
-            } else if (v === 'sunrise' || v === 'sunset') {
-                // handled by combined sun-arc block, skip
-                return;
             } else {
                 block.innerHTML = `
                     <i class="fas ${iconClass} big-icon"></i>
                     <div class="card-title">${label}</div>
-                    <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
+                    <i class="fas fa-grip-lines drag-handle" draggable="true"></i>
                     <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
                 `;
             }
+
             dashboard.appendChild(block);
             elements[v] = document.getElementById(v);
+            addDragAndClick(block, v);
+        }
 
-            const handle = block.querySelector('.drag-handle');
-            block.dataset.var = v;
-            // Open the history dialog when a tile is clicked. We ignore clicks
-            // on the drag-handle itself so drag events can work as expected.
-            block.addEventListener('click', (e) => {
-                if (e.target.classList.contains('drag-handle')) return;
-                openHistory(v);
-            });
-            handle.addEventListener('dragstart', (e) => {
-                draggedItem = block;
-                block.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                try { e.dataTransfer.setData('text/plain', ''); } catch (err) {}
-            });
-            handle.addEventListener('dragend', (e) => {
-                draggedItem = null;
-                block.classList.remove('dragging');
-            });
-        });
-
-        // Insert a custom 3x3 block (title-only, no value)
-        (function createLargeBlock(){
+        // 2️⃣ Großer Map-/Custom-Block
+        function createLargeBlock() {
             const block = document.createElement('div');
             block.className = 'weather-block big-block';
             block.dataset.var = 'customLargeBlock';
-            // Color / --title-bg usage to keep look uniform
             const color = colors[2 % colors.length];
             block.style.setProperty('--title-bg', color);
-            block.innerHTML = `
-                <i class="fas fa-chart-area big-icon"></i>
-                <div class="card-title">Großes Feld</div>
-                <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
-                <div class="card-value"><span id="customLargeBlock" class="value"></span><span class="unit"></span></div>
-            `;
-            dashboard.appendChild(block);
-            elements['customLargeBlock'] = document.getElementById('customLargeBlock');
-            // Make the block draggable like the others
-            const handle = block.querySelector('.drag-handle');
-            handle.addEventListener('dragstart', (e) => { draggedItem = block; block.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch(err){} });
-            handle.addEventListener('dragend', (e) => { draggedItem = null; block.classList.remove('dragging'); });
-            // clicking the block should open an empty history modal (no value) for now
-            block.addEventListener('click', (e) => { if (e.target.classList.contains('drag-handle')) return; openHistory('customLargeBlock'); });
-        })();
 
-        // Create combined Sun Arc block (sunrise + sunset + arc)
-        (function createSunArcBlock(){
+            block.innerHTML = `
+                <i class="fas fa-map big-icon"></i>
+                <div class="card-title">Karte</div>
+                <i class="fas fa-grip-lines drag-handle" draggable="true"></i>
+                <div class="card-value">
+                    <iframe id="customLargeBlockMapIframe" src="/static/map/map.html" style="width:100%; height:100%; border:none; border-radius:16px;"></iframe>
+                </div>
+            `;
+
+            dashboard.appendChild(block);
+            elements['customLargeBlock'] = document.getElementById('customLargeBlockMapIframe');
+            addDragAndClick(block, 'customLargeBlock');
+        }
+
+        // 3️⃣ Sun Arc Block
+        function createSunArcBlock() {
             const block = document.createElement('div');
             block.className = 'weather-block sun-arc-block';
             block.dataset.var = 'sunArc';
             const color = colors[1 % colors.length];
             block.style.setProperty('--title-bg', color);
+
             block.innerHTML = `
                 <i class="fas fa-sun big-icon"></i>
                 <div class="card-title">Sonnenverlauf</div>
-                <i class="fas fa-grip-lines drag-handle" draggable="true" title="Verschieben" aria-hidden="true"></i>
-                <div id="sunArcPlot" class="sun-plot" aria-hidden="true"></div>
+                <i class="fas fa-grip-lines drag-handle" draggable="true"></i>
+                <div id="sunArcPlot" class="sun-plot"></div>
                 <div class="sun-legend">
                     <div class="sun-legend-left"><div class="sun-legend-label">Aufgang</div><div id="sunrise" class="value">--</div></div>
                     <div class="sun-legend-right"><div class="sun-legend-label">Untergang</div><div id="sunset" class="value">--</div></div>
                 </div>
             `;
+
             dashboard.appendChild(block);
             elements['sunrise'] = document.getElementById('sunrise');
             elements['sunset'] = document.getElementById('sunset');
-            // add drag handlers
+            addDragAndClick(block, 'sunArc');
+        }
+
+        // Hilfsfunktion für Drag & Click
+        function addDragAndClick(block, v) {
             const handle = block.querySelector('.drag-handle');
-            handle.addEventListener('dragstart', (e) => { draggedItem = block; block.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch(err){} });
-            handle.addEventListener('dragend', (e) => { draggedItem = null; block.classList.remove('dragging'); });
-            block.addEventListener('click', (e) => { if (e.target.classList.contains('drag-handle')) return; openHistory('sunArc'); });
-        })();
+            block.addEventListener('click', (e) => { if (e.target === handle) return; openHistory(v); });
+            handle.addEventListener('dragstart', (e) => { 
+                draggedItem = block; 
+                block.classList.add('dragging'); 
+                e.dataTransfer.effectAllowed = 'move'; 
+                try { e.dataTransfer.setData('text/plain',''); } catch{} 
+            });
+            handle.addEventListener('dragend', (e) => { 
+                draggedItem = null; 
+                block.classList.remove('dragging'); 
+            });
+        }
+
+        // ✅ Erzeuge alle Blöcke in blockOrder
+        blockOrder.forEach((v, idx) => {
+            if (v === 'sunrise' || v === 'sunset') return; // handled by Sun Arc Block
+            if (v === 'map') {
+                createLargeBlock();
+            }else if (v === 'sunarc') {
+                createSunArcBlock();
+            }else {
+                createBlock(v, idx);
+            }
+        });
 
         // DnD reordering
         // --------------------------------------------------------------
@@ -368,20 +404,35 @@
         // enabling re-ordering of dashboard cards.
         // Note: This is a basic example; in production you'd also persist the
         // layout to localStorage or a backend so the positions remain stable.
-        let draggedItem = null;
-        const grid = dashboard;
-        grid.addEventListener('dragover', (e) => {
+
+        // DragStart & DragEnd sind bereits an jedem Block-Handle gesetzt
+        // Nun das DragOver auf dem Dashboard:
+        dashboard.addEventListener('dragover', (e) => {
             e.preventDefault();
             const target = e.target.closest('.weather-block');
             if (!target || target === draggedItem) return;
+
             const rect = target.getBoundingClientRect();
-            const offset = (e.clientX - rect.left) / rect.width;
-            if (offset > 0.5) {
-                if (target.nextSibling !== draggedItem) grid.insertBefore(draggedItem, target.nextSibling);
+            const middleX = rect.left + rect.width / 2;
+
+            if (e.clientX > middleX) {
+                // Cursor rechts von der Mitte -> nach target einfügen
+                if (target.nextSibling !== draggedItem) {
+                    dashboard.insertBefore(draggedItem, target.nextSibling);
+                }
             } else {
-                if (target !== draggedItem.nextSibling) grid.insertBefore(draggedItem, target);
+                // Cursor links von der Mitte -> vor target einfügen
+                if (target !== draggedItem.nextSibling) {
+                    dashboard.insertBefore(draggedItem, target);
+                }
             }
         });
+
+        // Optional: DragLeave zum Styling
+        dashboard.addEventListener('dragleave', (e) => {
+            // hier z.B. hovered class entfernen, wenn du optische Hinweise willst
+        });
+
 
         // HISTORY MODAL functions
         const historyOverlay = document.getElementById('historyOverlay');
@@ -419,17 +470,25 @@
                 if (key === 'city') {
                     const cityDisplay = document.getElementById('cityDisplay');
                     if (cityDisplay) cityDisplay.innerText = data.city;
+
+                    // Karte neu laden, wenn sich die Stadt ändert
+                    const iframe = document.getElementById('customLargeBlockMapIframe');
+                    if (iframe) {
+                        const src = iframe.src.split('?')[0]; // Basis-URL ohne Query
+                        iframe.src = `${src}?ts=${new Date().getTime()}`; // Cache-Busting
+                    }
                 }
+
                 if (elements[key]) elements[key].innerText = data[key];
+
                 if (key === 'windDirection') {
                     const arrow = document.getElementById('arrow-windDirection');
                     const deg = parseFloat(data[key]);
-                        if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
+                    if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
                 }
             }
-            // update any sun-parabola plots when sunrise/sunset change
-            if (typeof window.generatePlot === 'function') window.generatePlot();
         });
+
 
         // Initiale Daten vom Server holen
         fetch('/weather')
