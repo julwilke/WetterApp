@@ -1,4 +1,4 @@
-#verwaltet den cache für die API-Respionses
+#verwaltet den cache für die API-Respionses, speichert sie in data/cache mit timestamp und stadtname im dateinamen
 
 import json
 import os
@@ -11,7 +11,7 @@ class CacheManager:
     def __init__(self, cache_dir='data/cache'):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.cache_duration = timedelta(minutes=10)  # 10 Minuten Cache
+        self.cache_duration = timedelta(minutes=10)  # 10 Minuten Cache - danach Aktuallisierung nötig
     
     def _get_cache_filename(self, city):
         """Erstellt Dateinamen wie 2025-11-26-14-07_paris.json"""

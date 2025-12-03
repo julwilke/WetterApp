@@ -3,7 +3,15 @@
 #.....Zusätzlich werden fehlende Werte genullt, damit das Frontend keinen Error schmeißt
 #........Leere dicts ( {} ) als Ersatzwerte damit das Frontend nihct crasht
 
+
+#Vielleich allgemeiner fassen, gibt es einen Weg, dass alle API-Clients funktionieren?
+
+import datetime
+
+
 def normalize_weather_data(raw: dict, city: str) -> dict:       #Rohdaten als dictionary im .JSON Format (aus OWM) / city-String für Angabe der stadt im OWM-API-Call, spuckt am Ende wieder ein dict im return aus
+    """Normalisiert Rohdaten von OpenWeatherMap API in ein einheitliches Format für die WebApp
+    """
     main = raw.get("main", {})               #temp, feels_like, temp_min, temp_max, humidity, pressure
     wind = raw.get("wind", {})               #speed, deg, gust
     sys = raw.get("sys", {})                 #sunrise, sunset
@@ -65,3 +73,30 @@ def normalize_weather_data(raw: dict, city: str) -> dict:       #Rohdaten als di
         "pressureTrend": "stabil", # --> später ggf. eigenen Trend berechnen
         "fog": fog,
     }
+
+
+#Ideen: 
+
+@staticmethod
+def air_quality_normalizer():
+   if not raw or 'list' not in raw:
+            return {}
+        components = raw['list'][0]. get('components', {})
+        aqi = raw['list'][0].get('main', {}).get('aqi', 0)
+        
+        return {
+            'airQualityIndex': aqi,
+            'pm10': components.get('pm10', 0),
+            'pm2_5': components.get('pm2_5', 0),
+            'co': components.get('co', 0),
+            'no2': components.get('no2', 0),
+            'o3': components.get('o3', 0),
+        }
+
+
+@staticmethod
+def timestamp_to_iso(timestamp):
+    """Konvertiert Unix-Timestamp in ISO 8601 Format"""
+    if timestamp is None:
+        return None
+    return datetime.utcfromtimestamp(timestamp).isoformat()
