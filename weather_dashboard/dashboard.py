@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from backend.csv_weather_provider import CSVWeatherProvider
 from geopy.geocoders import Nominatim
-import generate_map
+from . import generate_map
 
 class WeatherDashboard:
 

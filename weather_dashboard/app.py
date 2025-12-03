@@ -1,4 +1,4 @@
-from weather_dashboard import WeatherDashboard
+from .dashboard import WeatherDashboard
 
 def main():
     app = WeatherDashboard()
