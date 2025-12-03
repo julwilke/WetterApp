@@ -4,6 +4,8 @@ import threading
 import os
 from datetime import datetime
 from backend.csv_weather_provider import CSVWeatherProvider
+from geopy.geocoders import Nominatim
+import generate_map
 
 class WeatherDashboard:
 
@@ -21,6 +23,9 @@ class WeatherDashboard:
         self.weather_data = self.provider.get_weather_for_city(self.city)
 
         self.last_polled = datetime.utcnow()
+
+        #Geolocator für City→Koordinaten
+        self.geolocator = Nominatim(user_agent="weather_dashboard") #Julian: Muss hier dann 'dashboard' hin?
 
         # -------------------------------------------------------
         # ROUTES
