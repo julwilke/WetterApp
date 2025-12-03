@@ -1,55 +1,3 @@
-// Example: Simple temperature timeseries chart. In production the data
-// would come from the backend (via fetch or socket updates). This demo
-// block shows how the Plotly chart is created and dynamically updated.
-// Note: Keep references optional / guarded (check `document.getElementById`) so
-// the script does not crash when a chart placeholder is absent.
-// Example data (dev / demo):
-// X = Zeitpunkte, Y = Temperaturwerte
-let xValues = ["2025-11-27 08:00", "2025-11-27 09:00", "2025-11-27 10:00"];
-let yValues = [20, 21, 22]; // Diese Werte könnten aus einer Variable kommen
-
-// Optional: Funktion zum dynamischen Update von Werten
-/**
- * updatePlot
- * -------------
- * Helper to update the weather plot (temperature) with new x/y arrays.
- * We call Plotly.update() with the new arrays; the chart itself is
- * static (no pan/zoom) unless `staticPlot` is disabled.
- */
-function updatePlot(newX, newY) {
-    Plotly.update("weatherPlot", {x:[newX], y:[newY]});
-}
-
-// Erstellen des Diagramms
-const trace = {
-    x: xValues,
-    y: yValues,
-    mode: "lines+markers",
-    name: "Temperatur (°C)"
-};
-
-const layout = {
-    title: "Temperaturverlauf",
-    xaxis: {title: "Zeit"},
-    yaxis: {title: "Temperatur (°C)"}
-};
-
-if (document.getElementById('weatherPlot')) {
-    // Weather plot should also be static (no zoom / pan) unless explicitly enabled
-    Plotly.newPlot("weatherPlot", [trace], layout, {staticPlot: true, displayModeBar: false, responsive: false});
-}
-
-// Beispiel: neue Daten nach 3 Sekunden pushen
-setTimeout(() => {
-    let newX = ["2025-11-27 11:00"];
-    let newY = [23];
-    xValues.push(...newX);
-    yValues.push(...newY);
-    updatePlot(xValues, yValues);
-}, 3000);
-// Skip update if weatherPlot is not present
-
-
 /*
  * Sun path (Parabola) generator
  * ------------------------------------------------------------------
@@ -113,7 +61,8 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             let t = (h - sunriseTime) / totalHours;
             let angle = sunriseAngle * (1 - t);
             xValues.push(Math.cos(angle));
-            yValues.push(Math.sin(angle));
+            yValues.push(Math.sin(angle) * 0.75); // streckt/komprimiert vertikal
+
         }
 
             // Helper to convert an hour value to x,y on the unit semicircle arc
@@ -122,7 +71,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             if (t < 0) t = 0;
             if (t > 1) t = 1;
             const angle = sunriseAngle * (1 - t);
-            return { x: Math.cos(angle), y: Math.sin(angle) };
+            return { x: Math.cos(angle), y: Math.sin(angle) * 0.75 };
         }
 
         // compute markers for sunrise/sunset and current time
@@ -191,7 +140,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
         // Responsive: width based on container
         const width = document.getElementById(containerId) ? document.getElementById(containerId).offsetWidth : 160;
         // make plot more visible by default
-        const height = Math.max(90, Math.round(width * 0.75));
+        const height = Math.max(150, Math.round(width * 0.75));
         console.debug('plot dims', { width, height });
 
         const layout = {
@@ -205,7 +154,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
                 showgrid: false,
                 zeroline: false,
                 showticklabels: false,
-                range: [-0.1, maxY + padding],
+                range: [0, maxY + padding],
                 scaleanchor: "x"
             },
             margin: {l:0, r:0, t:0, b:0},

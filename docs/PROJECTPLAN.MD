@@ -1,3 +1,11 @@
+# WetterApp 123🌦️
+
+Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI".
+
+## 📋 Projektbeschreibung
+
+Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wetterdaten. Das Projekt startet mit einem einfachen Skript zum Abrufen aktueller Wetterdaten per API für eine gegebene Postleitzahl und wird schrittweise um weitere Features erweitert.
+
 ## ✅ To-Dos bis zum nächsten Meeting
 - ...
 ---
