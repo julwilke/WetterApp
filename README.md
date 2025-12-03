@@ -1,4 +1,4 @@
-# WetterApp 🌦️
+# WetterApp 123🌦️
 
 Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI".
 
