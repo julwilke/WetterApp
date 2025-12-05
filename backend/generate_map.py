@@ -1,48 +1,37 @@
+##############################################
+#   🌦 WETTER-DASHBOARD – MAP GENERATOR 1.1 #
+##############################################
+
+# =============== IMPORTS ====================
 import os
 import folium
-import shutil
 
-# Zielordner
+# ============================================
+#   KONSTANTEN / ORDNER
+# ============================================
+# Zielordner für die Map-Datei
 IMAGE_DIR = "/workspaces/WetterApp/weather_dashboard/static/map"
 
-def clear_image_folder():
+# ============================================
+#   MAP GENERIEREN
+# ============================================
+def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
     """
-    Löscht alle Dateien im image-Ordner.
+    Erstellt eine Folium-Karte für gegebene Koordinaten.
+    Fügt einen Temperatur-Pin hinzu und speichert die Karte als map.html.
+    
+    Parameter:
+        lat (float): Breitengrad
+        lon (float): Längengrad
+        temp (str/int): Temperatur für Marker
+        zoom (int): Zoom-Level der Karte
     """
-    if not os.path.exists(IMAGE_DIR):
-        os.makedirs(IMAGE_DIR)
+    print(f"🗺️  Erstelle Karte für Koordinaten: {lat}, {lon}")
 
-    for filename in os.listdir(IMAGE_DIR):
-        file_path = os.path.join(IMAGE_DIR, filename)
-        try:
-            if os.path.isfile(file_path) or os.path.islink(file_path):
-                os.remove(file_path)
-            elif os.path.isdir(file_path):
-                shutil.rmtree(file_path)
-        except Exception as e:
-            print(f"Fehler beim Löschen von {file_path}: {e}")
-
-    print("Ordner geleert.")
-
-# temp hier übergeben
-
-def generate_map(lat, lon, temp="--", zoom=12):
-    """
-    Erstellt eine Folium-Karte und speichert sie als map.html.
-    """
-    print(f"Erstelle Karte für Koordinaten: {lat}, {lon}")
-
+    # Neue Folium-Karte
     m = folium.Map(location=[lat, lon], zoom_start=zoom)
 
-    # Grauer Tile-Layer (TopPlus Open Grau)
-    #folium.TileLayer(
-    #    tiles='http://sgx.geodatenzentrum.de/wmts_topplus_open/tile/1.0.0/web_grau/default/WEBMERCATOR/{z}/{y}/{x}.png',
-    #    attr='Map data: &copy; <a href="http://www.govdata.de/dl-de/by-2-0">dl-de/by-2-0</a>',
-    #    name='TopPlus Open Grau',
-    #    max_zoom=18
-    #).add_to(m)
-
-    # Temperatur-Pin (DivIcon mit Kasten + Pfeil)
+    # Temperatur-Pin als DivIcon
     html = f"""
     <div style="position: relative; display: inline-block; text-align:center; white-space: nowrap;">
         <div style="
@@ -67,6 +56,7 @@ def generate_map(lat, lon, temp="--", zoom=12):
     </div>
     """
 
+    # Marker auf der Karte setzen
     folium.Marker(
         [lat, lon],
         icon=folium.DivIcon(
@@ -77,13 +67,8 @@ def generate_map(lat, lon, temp="--", zoom=12):
         tooltip=f"{temp}°C"
     ).add_to(m)
 
-
+    # Karte speichern
     output_path = os.path.join(IMAGE_DIR, "map.html")
     m.save(output_path)
 
-    print(f"Karte gespeichert unter: {output_path}")
-
-
-if __name__ == "__main__":
-    clear_image_folder()
-    generate_map()
+    print(f"✅ Karte gespeichert unter: {output_path}")
