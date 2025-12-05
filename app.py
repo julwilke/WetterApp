@@ -1,8 +1,23 @@
+##############################################
+#   🌦 WETTER-DASHBOARD – APP STARTER 1.0  #
+##############################################
+
+# =============== IMPORTS ====================
 from backend import dashboard
 
+# ============================================
+#   HAUPT-FUNKTION
+# ============================================
 def main():
-    app = dashboard.WeatherDashboard()
-    app.run()
+    """
+    Startet das Wetter-Dashboard Backend.
+    Erstellt eine Instanz von WeatherDashboard und startet den Server.
+    """
+    app = dashboard.WeatherDashboard()   # Backend initialisieren
+    app.run()                            # Server + Socket starten
 
+# ============================================
+#   SCRIPT START
+# ============================================
 if __name__ == "__main__":
-    main()
+    main()  # Hauptfunktion ausführen

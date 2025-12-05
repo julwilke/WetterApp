@@ -112,8 +112,3 @@ class WeatherDashboard:
         print("🚀 Dashboard läuft → http://127.0.0.1:5000")
         print("📡 Websocket aktiv – UI lädt Live-Daten")
         self.socketio.run(self.app, host=host, port=port)
-
-
-# Start
-if __name__ == "__main__":
-    WeatherDashboard().run()
