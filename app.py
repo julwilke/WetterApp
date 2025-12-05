@@ -1,7 +1,7 @@
-from .dashboard import WeatherDashboard
+from backend import dashboard
 
 def main():
-    app = WeatherDashboard()
+    app = dashboard.WeatherDashboard()
     app.run()
 
 if __name__ == "__main__":
