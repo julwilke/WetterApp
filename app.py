@@ -24,11 +24,14 @@ Initialisiert:
 
 from backend import dashboard
 
+# ============================================
+#  1) Konsolen Argumente lesen
+# ============================================
 
-
+#def parse_args(): ...
 
 # ============================================
-#   HAUPT-FUNKTION
+#  2) HAUPT-FUNKTION - main-Boot-Sequenz
 # ============================================
 def main():
     """
@@ -36,17 +39,17 @@ def main():
     Erstellt eine Instanz von WeatherDashboard und startet den Server.
     """
     
-    print("Wetter-Dashboard Backend v{__version__} startet...")
+    print(f"Wetter-Dashboard Backend v{__version__} startet...")
 
     #try: #Grundsätzliche "Fatal Errors" abfangen, folgt noch
     app = dashboard.WeatherDashboard()   # Backend initialisieren
-    app.run()                            # Server + Socket starten
+    app.run(city="Berlin")               # Server + Socket starten
 
     #except Exception as e:
         #logging.exception("Fataler Fehler im Backend!: ")
 
 # ============================================
-#   SCRIPT START
+#  3) SCRIPT START (Entry-Point)
 # ============================================
 if __name__ == "__main__":
     main()  # Hauptfunktion ausführen

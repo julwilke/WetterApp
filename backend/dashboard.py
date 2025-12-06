@@ -1,6 +1,6 @@
-##############################################
-#   🌦 WETTER-DASHBOARD – FINAL BACKEND 1.1  #
-##############################################
+###############################################
+#   🌦 WETTER-DASHBOARD – BACKEND 1.0.0       #
+###############################################
 
 # =============== IMPORTS ====================
 from flask import Flask, render_template, jsonify
@@ -25,29 +25,46 @@ class WeatherDashboard:
             static_folder='../weather_dashboard/static'
         )
 
+        #Hier passiert...
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
 
-        # CSV Provider 
-        self.provider = CSVWeatherProvider("weather_sample.csv")
+        # CSV Provider #J: Initialisieren, aber noch nicht laden!
+        self.provider = CSVWeatherProvider("weather_sample.csv") 
 
-        # Standard-Stadt beim Start
-        self.city = "Berlin"
-        self.weather_data = self.provider.get_weather_for_city(self.city)
+        # Standard-Stadt beim Start noch nicht belegen, das folgt später
+        #self.city = "Berlin"
+        #self.weather_data = self.provider.get_weather_for_city(self.city)
+        #self.last_polled = datetime.utcnow()
 
-        self.last_polled = datetime.utcnow()
-
+        #Leer initialisieren, später belegen
+        self.city = None
+        self.weather_data = None
+        self.last_polled = None
+        
+        #Geolocator Client bauen, später über Nominatim Städte zu Koordinaten auflösen
         self.geolocator = Nominatim(user_agent="weather_dashboard")
 
-        # ========================================
-        # ROUTES → Frontend API
-        # ========================================
+        #J: Neu hinzugefügt für bessere Modularisierung
+        self.define_routes()
+        self.define_socket_events()
+
+    # ========================================
+    # ROUTES → Frontend API
+    # ========================================
+
+    #J: Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
+
+    def define_routes(self):
 
         @self.app.route('/')
         def index():
+
             return render_template('index.html')
+
 
         @self.app.route('/weather')
         def weather():
+
             data = self.provider.get_weather_for_city(self.city)
             if not data:
                 return jsonify({"error": "City not found in CSV", "city": self.city})
@@ -63,35 +80,64 @@ class WeatherDashboard:
                 "lastPolled": datetime.utcnow().isoformat() + "Z"
             })
 
-        # ========================================
-        # SOCKET → erhält Stadt vom Frontend
-        # ========================================
+    # ========================================
+    # SOCKET → erhält Stadt vom Frontend
+    # ========================================
+    def define_socket_events(self):
+
         @self.socketio.on("cityInput")
         def socket_city_input(data):
+
             new_city = data.get("city")
-            if new_city:
-                self.city = new_city
-                print(f"🌍 Neue Stadt gewählt → {self.city}")
+            
+            if not new_city: #Leerer Return falls es dieselbe Stadt ist
+                return
+            
+            #Neue Stad übernehmen
+            print(f"🌍 Neue Stadt gewählt → {self.city}")  
+            self.city = new_city                            
 
-                # Sofort Wetter aktualisieren
-                updated = self.provider.get_weather_for_city(self.city)
-                if updated:
-                    self.weather_data = updated
 
-                # 🌍 Karte NEU GENERIEREN (wichtig!)
-                lat, lon = self.fetch_coordinates(self.city)
-                generate_map.generate_map(
-                    lat, lon,
-                    temp=self.weather_data.get("currentTemperature", "--")
-                )
+            # Sofort Wetter aktualisieren
+            updated = self.provider.get_weather_for_city(self.city)
+            if updated:
+                self.weather_data = updated
 
-                # Live Update an Frontend
-                self.socketio.emit("update", {
-                    "city": self.city,
-                    "lat": lat,
-                    "lon": lon,
-                    **self.weather_data
-                })
+            # 🌍 Karte NEU GENERIEREN (wichtig!) / Koordinaten holen
+            lat, lon = self.fetch_coordinates(self.city)
+            
+            generate_map.generate_map(
+                lat, lon,
+                temp=self.weather_data.get("currentTemperature", "--")
+            )
+
+            # Live Update an Frontend für Aktualisierung
+            self.socketio.emit("update", {
+                "city": self.city,
+                "lat": lat,
+                "lon": lon,
+                **self.weather_data
+            })
+
+
+    #NEU JULIAN 1.0.0 - für das leere initialisieren am Anfang im Konstruktor, jetzt hier die Parameter beschreiben
+    #...erst hier wird mit Werten initialisiert
+    # ========================================
+    # INITIALISIERUNG NACH PARAMETERN
+    # ========================================
+
+    def initialize(self, city):
+
+        self.city = city
+        self.weather_data = self.provider.get_weather_for_city(city)
+
+        #DEFAULT laden falls Stadt nicht gefunden wurde
+        if not self.weather_data:
+            print(f"Stadt '{city}' nicht gefunden. Fallback auf Default: Berlin.")
+            self.city = 'Berlin'
+            self.weather_data = self.provider.get_weather_for_city('Berlin')
+
+        self.last_polled = datetime.utcnow()
 
     # ========================================
     # HELPER → Koordinaten holen + Map Update
@@ -108,7 +154,16 @@ class WeatherDashboard:
     # ========================================
     # SERVER STARTEN
     # ========================================
-    def run(self, host="0.0.0.0", port=5000):
+    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jertzt city als argument (Berlin als DEFAULT)
+        """
+        - Hier initialisieren, da nun Parameter bekannt sind
+        - Jetzt dürfen Daten geladen werden
+        - Vereinfachung für Tests und Debugging
+        """
+
+        #HIER WIRD DANN ENDLICH INITIALISIERT!
+        self.initialize(city)
+
         print("🚀 Dashboard läuft → http://127.0.0.1:5000")
         print("📡 Websocket aktiv – UI lädt Live-Daten")
         self.socketio.run(self.app, host=host, port=port)

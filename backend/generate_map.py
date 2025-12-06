@@ -7,10 +7,10 @@ import os
 import folium
 
 # ============================================
-#   KONSTANTEN / ORDNER
+#   KONSTANTEN / ORDNER (J: Nach unten verschoben und mit "dynamischen" Pfaden angepasst)
 # ============================================
-# Zielordner für die Map-Datei
-IMAGE_DIR = "/workspaces/WetterApp/weather_dashboard/static/map"
+# ...
+
 
 # ============================================
 #   MAP GENERIEREN
@@ -67,8 +67,24 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
         tooltip=f"{temp}°C"
     ).add_to(m)
 
+    # Zielordner für die Map-Datei
+    # backend/
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # WetterApp/
+    project_root = os.path.abspath(os.path.join(base_dir, ".."))
+
+    # WetterApp/weather_dashboard/static/map
+    map_dir = os.path.join(project_root, "weather_dashboard", "static", "map")
+
+    # Ordner sicher erstellen
+    os.makedirs(map_dir, exist_ok=True)
+
+    # Zieldatei
+    output_path = os.path.join(map_dir, "map.html")
+
     # Karte speichern
-    output_path = os.path.join(IMAGE_DIR, "map.html")
     m.save(output_path)
 
+    #Ausgabe Konsole
     print(f"✅ Karte gespeichert unter: {output_path}")

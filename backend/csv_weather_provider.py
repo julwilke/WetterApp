@@ -1,13 +1,47 @@
+###############################################
+#   🌦 CSV-WEATHER-PROVIDER – 1.0.0           #
+###############################################
+
+# =============== IMPORTS ====================
 import pandas as pd
+import os               #J: Für Fehlerbehandlung falls die Datei/Pfad nicht gefunden wurde
 
 class CSVWeatherProvider:
-    def __init__(self, csv_path="weather_sample.csv"):
-        self.csv_path = csv_path
+
+    def __init__(self, filename="weather_sample.csv"): #J: Hier nicht den Pfad, sondern den Dateinamen nehmen 'filename'
+        
+        # Neu hinzugefügt um die Probleme beim verschieben der app.py oder .csv (Pfadprobleme) zu lösen:
+
+        # Ordner, in dem dieses Skript leigt /WetterApp/backend
+        base_dir = os.path.dirname(os.path.abspath(__file__))   
+
+        # Project-Root-Pfad ("Überordner") bestimmen
+        project_root = os.path.abspath(os.path.join(base_dir, "..")) 
+
+        # /data/samples
+        samples_dir = os.path.join(project_root, "data", "samples")
+
+        # FINALER absoluter Pfad zu der CSV-Datei
+        self.csv_path = os.path.join(samples_dir, filename)
+        self.csv_path = os.path.abspath(self.csv_path)                           
+
+        #Fehler throwen falls nicht gefunden
+        if not os.path.exists(self.csv_path):   
+            print(f"CSV nicht gefunden!: {self.csv_path}")
+        else:
+            print(f"CSV geladen aus: {self.csv_path}")
+
 
     def get_weather_for_city(self, city: str):
         """Liest CSV, filtert nach Stadt und gibt Wetterdaten als Dictionary zurück."""
-        df = pd.read_csv(self.csv_path)
 
+        #J: Try Except hinzugefügt falls Pfad nicht gefunden wurde
+        try:
+            df = pd.read_csv(self.csv_path)
+        except Exception as e:
+            print(f"CSV konnte nicht geladen werden: {e}")
+
+        # Filtern auf Stadt
         df_city = df[df["CITY"].str.lower() == city.lower()]
 
         if df_city.empty:
@@ -15,6 +49,7 @@ class CSVWeatherProvider:
 
         row = df_city.iloc[0].to_dict()
 
+        # RETURN inkl. DUMMY Werte für Frontend übergeben bei Bedarf
         return {
             "city": row["CITY"],
             "currentTemperature": row["TEMPERATURE"],
