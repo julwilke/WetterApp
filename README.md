@@ -1,6 +1,59 @@
-# WetterApp 🌦️
+<h1 align="center">🌦️ WetterApp</h1>
 
-Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI".
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/python-3.11%2B-yellow?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/status-stable-green?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/license-AGPL--3.0-red?style=for-the-badge" />
+</p>
+
+---
+
+### Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"
+
+---
+
+# 📌 Projektübersicht
+
+Das WetterApp-Backend stellt eine modulare und erweiterbare Architektur bereit,  
+mit der Wetterdaten über mehrere Provider (CSV, API) verarbeitet und an eine Web- oder CLI-Oberfläche übergeben werden können.
+
+Version `v1.0.0` bildet den **ersten stabilen Release**, der eine konsistente Projektstruktur, sauberes Boot-Verhalten und robuste Datenpfade bereitstellt.
+
+---
+
+# 🏗 Architekturüberblick
+
+```text
+WetterApp/
+├── app.py                       # Entry Point (Boot-Sequenz)
+│
+├── backend/                     # Backend-Logik (Provider, Routing, Map)
+│   ├── dashboard.py             # Haupt-Backend: Routing, Socket, Initialisierung
+│   ├── csv_weather_provider.py  # CSV-Provider (Test-/Fallback-Daten)
+│   ├── generate_map.py          # Dynamische Folium-Map-Erzeugung
+│   └── __init__.py
+│
+├── cli/                         # CLI-Version der App (Alternative zum Web-Dashboard)
+│   ├── cli.py                   # Wetterabfrage per Konsole (API/PLZ)
+│   └── __init__.py
+│
+├── weather_dashboard/           # Frontend (HTML, CSS, JS)
+│   ├── static/
+│   │   └── map/                 # Dynamisch generierte HTML-Karten
+│   └── templates/               # index.html & UI-Struktur
+│
+├── data/
+│   └── samples/                 # Beispiel-/Fallback-Daten wie weather_sample.csv
+│
+├── docs/                        # Allgemeine Dokumentation & Projektunterlagen
+│
+├── logging/                     # Reserviert für Logging-Konfigurationen
+│
+├── requirements.txt             # Python-Abhängigkeiten
+├── .env.example                 # Beispielkonfiguration (API-Keys, Flags)
+└── LICENSE
+```
 
 ## 📋 Projektbeschreibung
 
