@@ -8,23 +8,27 @@ Die WetterApp ist eine Python-basierte Anwendung zur Abfrage und Analyse von Wet
 
 Das Ziel ist eine benutzerfreundliche und erweiterbare WebApp mit vielen üblichen Funktionen der Darstellung von Wetter Daten.
 
+## Version
+
+-aktuelle Version: 1.0.0
+
 ## 🎯 Projektziele
 
-- **Phase 1**: 
-    - ✅ Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
-    - ✅ Grundlegende WebApp entwickeln
-    - [ ] Abgabefertig und bewertbare Lösung fertigstellen
-- **Phase 2**: 
-    - [ ] Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
-    - [ ] Persistenz ausgewählter Daten
-    - [ ] Logging, Debugging, Test-Funktionen einbauen
-- **Phase 3**: 
-    - [ ] Integration von KI-Funktionen (eigene Vorhersagen, Mustererkennung, Anomalien (z.B. "ungewöhnlich warmer Dezember")
+- **Phase 1**:
+    -✅ Einfaches Python-Skript zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole --> MVP (Minimum Viable Product)
+    -✅ Grundlegende WebApp entwickeln
+    -[ ] Abgabefertige und bewertbare Lösung fertigstellen
+- **Phase 2**:
+    -[ ] Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
+    -[ ] Persistenz ausgewählter Daten
+    -[ ] Logging, Debugging, Test-Funktionen einbauen
+- **Phase 3**:
+    -[ ] Integration von KI-Funktionen (eigene Vorhersagen, Mustererkennung, Anomalien (z.B. "ungewöhnlich warmer Dezember")
 - **Phase 4**: Finalisierung
-    - [ ] Code-Refactoring / Hardening
-    - [ ] docs / configs / README.MD finalisieren
+    -[ ] Code-Refactoring / Hardening
+    -[ ] docs / configs / README.MD finalisieren
 
-## 🛠️ Installation & Verwendung 
+## 🛠️ Installation & Verwendung
 
 ```bash
 # Repository klonen
@@ -45,14 +49,14 @@ python app.py
 ## 📦 Technology-Stack
 
 - **Sprache**: Python 3.10+ (prüfen!)
-- **API**: OpenWeatherMap, 
+- **API**: OpenWeatherMap
 - **Libraries**: folgen
 - **Zukünftig**: folgen
 
 ## 👥 Team
 
 - Adham
-- Tugba 
+- Tugba
 - Nick-Andre
 - Julian
 
