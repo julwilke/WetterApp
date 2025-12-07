@@ -1,156 +1,318 @@
-#####################################
-# CLI-Version MVP der Wetterabfrage #
-#####################################
-
 # weather_cli.py
-# Dieses Skript fragt die aktuelle Wetterlage für eine eingegebene Postleitzahl (PLZ) ab
-# und gibt Temperatur, Luftfeuchte und eine kurze Wetterbeschreibung aus.
-# Jede Zeile ist kommentiert, damit du genau siehst, was passiert und wo du später
-# Erweiterungen einfügst.
+#
+# Ziele:
+# - Klarer und stabiler Ablauf (Argumente → dotenv → API-Aufruf → Parsing → Ausgabe → optionales Logging)
+# - Saubere Fehlerbehandlung mit verständlichen Meldungen und Exit-Codes
+# - Leicht testbar (parse_weather_data ist rein funktional)
+#
+# Kurz: Diese Datei ist die empfohlene "Endfassung" eurer weather CLI.
+import os                      # für Umgebungsvariablen & Dateisystemfunktionen
+import sys                     # für sys.exit mit Exit-Codes
+import csv                     # CSV-Logging
+import json                    # JSON Serialisierung
+import time                    # UTC Zeitstempel
+from typing import Optional, Dict, Tuple  # Typinformationen zur Lesbarkeit
+import argparse                # Kommandozeilenargumente parsen
+import requests                # HTTP-Client für API-Aufrufe
 
-# Standardbibliothek 'os' wird genutzt, um Umgebungsvariablen (API-Key) zu lesen.
-import os  # os: Zugriff auf Umgebungsvariablen, Pfade etc.
+# python-dotenv ist optional; falls installiert, kann .env automatisch geladen werden
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except Exception:
+    load_dotenv = None
+    DOTENV_AVAILABLE = False
 
-# 'sys' wird verwendet, um ggf. das Programm mit einem Fehlercode zu beenden.
-import sys  # sys: Beenden mit sys.exit, Zugriff auf argv falls nötig
+# ---------------------
+# Konfiguration / Defaults
+# ---------------------
+OPENWEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"  # OpenWeatherMap Current Weather API
+HTTP_TIMEOUT = 10            # Sekunden; verhindert, dass requests ewig blockiert
+DEFAULT_COUNTRY = "DE"       # Default-Ländercode, wenn nichts eingegeben wird
+DEFAULT_UNITS = "metric"     # metric => Temperatur in °C
 
-# 'requests' wird verwendet, um HTTP-Anfragen an die Wetter-API zu senden.
-import requests  # requests: einfache HTTP-Anfragen in Python
+# ---------------------
+# Hilfsfunktionen
+# ---------------------
 
-# 'typing' für optionale Typannotationen (Verbesserung der Lesbarkeit).
-from typing import Optional, Dict  # Optional, Dict: Typen für Funktionsergebnisse
+def optional_load_dotenv(dotenv_path: Optional[str] = None) -> None:
+    """
+    Versucht, eine .env-Datei zu laden (falls python-dotenv installiert ist).
+    - dotenv_path: optionaler Pfad zur .env; wenn None => load_dotenv() versucht Standard-Datei.
+    - Keine Ausnahme wenn python-dotenv fehlt; Funktion ist eine no-op dann.
+    """
+    if DOTENV_AVAILABLE:
+        if dotenv_path:
+            load_dotenv(dotenv_path)
+        else:
+            load_dotenv()
+    else:
+        # dotenv nicht installiert: nichts tun — Nutzer kann Umgebungsvariablen manuell setzen
+        return
 
-# dotenv verwenden, um persänlichen API Key aus '.env' zu verwenden
-from dotenv import load_dotenv
-load_dotenv()
-
-# Konstanten definieren: Basis-URL der OpenWeatherMap-API für den aktuellen Wetterabruf.
-OPENWEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"  # Basis-Endpunkt für "current weather"
-
-# Hilfsfunktion: API-Key aus der Umgebungsvariable holen.
 def get_api_key() -> Optional[str]:
-    # Lies den API-Key aus der Umgebungsvariablen 'OPENWEATHER_API_KEY'.
-    api_key = os.getenv("OPENWEATHER_API_KEY")  # os.getenv: gibt None zurück, wenn Variable nicht gesetzt
-    # Wenn kein API-Key gesetzt ist, gib None zurück (Aufrufer kann Fehler behandeln).
-    return api_key  # Rückgabe des API-Keys oder None
+    """
+    Liest OPENWEATHER_API_KEY aus der Umgebung und gibt ihn zurück.
+    - Rückgabe: API-Key string oder None wenn nicht gesetzt.
+    """
+    return os.getenv("OPENWEATHER_API_KEY")
 
-# Hilfsfunktion: Baut die Anfrage-Parameter für OpenWeatherMap zusammen.
-def build_query_params(zip_code: str, country_code: str = "DE", units: str = "metric") -> Dict[str, str]:
-    # OpenWeatherMap akzeptiert ein 'zip' Parameter der Form "PLZ,COUNTRYCODE" (z.B. "10115,DE").
-    zip_param = f"{zip_code},{country_code}"  # Erzeuge das zip-Argument
-    # Erzeuge das Dict mit Parametern; apiKey wird später ergänzt.
-    params = {"zip": zip_param, "units": units}  # units=metric → Temperatur in Celsius
-    return params  # Rückgabe der Basis-Parameter (ohne apiKey)
+def build_query_params(zip_code: str, country_code: str = DEFAULT_COUNTRY, units: str = DEFAULT_UNITS) -> Dict[str, str]:
+    """
+    Baut das Query-Parameter-Dict für OpenWeatherMap.
+    - OpenWeatherMap erwartet 'zip' im Format 'PLZ,COUNTRY' (z.B. '10115,DE').
+    - 'units' erlaubt 'metric' (°C).
+    """
+    zip_param = f"{zip_code},{country_code}"
+    return {"zip": zip_param, "units": units}
 
-# Hauptfunktion: Führt die Anfrage aus und gibt strukturierte Daten zurück.
-def fetch_current_weather(api_key: str, zip_code: str, country_code: str = "DE") -> Dict:
-    # Baue die Basis-Parameter zusammen.
-    params = build_query_params(zip_code, country_code)  # Basis-Parameter (zip, units)
-    # Füge den API-Key zu den Parametern hinzu.
-    params["appid"] = api_key  # 'appid' ist der Parametername für den OpenWeatherMap API-Key
-    # Sende die GET-Anfrage an die API.
-    response = requests.get(OPENWEATHER_URL, params=params, timeout=10)  # timeout in Sekunden setzen
-    # Prüfe, ob der HTTP-Statuscode 200 (OK) ist; wenn nicht, werfe einen Fehler mit Info.
+def fetch_current_weather(api_key: str, zip_code: str, country_code: str = DEFAULT_COUNTRY) -> Dict:
+    """
+    Ruft die OpenWeatherMap Current Weather API ab und gibt das geparste JSON zurück.
+    - Bei Netzwerk- oder API-Fehlern wird eine RuntimeError mit klarer Nachricht geworfen.
+    """
+    params = build_query_params(zip_code, country_code)
+    params["appid"] = api_key  # OpenWeatherMap erwartet 'appid' als Key-Parameter
+
+    try:
+        # Timeout verwenden, um Hänger zu vermeiden
+        response = requests.get(OPENWEATHER_URL, params=params, timeout=HTTP_TIMEOUT)
+    except requests.exceptions.RequestException as e:
+        # Netwerkfehler (Timeout, DNS, Verbindung) => erklärbare RuntimeError
+        raise RuntimeError(f"Netzwerkfehler beim Aufruf der Wetter-API: {e}") from e
+
+    # Prüfe HTTP-Status
     if response.status_code != 200:
-        # Versuche, die Fehlermeldung aus der API-Antwort zu lesen; falls nicht möglich, zeige Statuscode.
+        # Versuche eine API-Fehlermeldung aus JSON zu lesen, sonst nimm Text/Status
         try:
-            err = response.json()  # JSON-Fehlerantwort parsen
+            err = response.json()
         except ValueError:
-            err = {"message": f"HTTP {response.status_code} ohne JSON-Antwort"}  # Fallback-Fehlerinfo
-        # Hebe eine Exception mit hilfreicher Information, damit der Aufrufer es behandeln kann.
+            err = {"message": response.text or f"HTTP {response.status_code}"}
         raise RuntimeError(f"API-Anfrage fehlgeschlagen: {response.status_code} - {err}")
-    # Wenn die Antwort OK ist, parse das JSON und gib es zurück.
-    return response.json()  # Rückgabe des geparsten JSON-Dictionaries
 
-# Hilfsfunktion: Extrahiert die gewünschten Informationen (Temperatur, Luftfeuchte, Beschreibung).
+    # Parse JSON und gib es zurück
+    try:
+        return response.json()
+    except ValueError as e:
+        # Unwahrscheinlicher Fehler: ungültiges JSON
+        raise RuntimeError(f"API-Antwort konnte nicht als JSON geparst werden: {e}") from e
+
 def parse_weather_data(api_response: Dict) -> Dict[str, Optional[str]]:
-    # Standardmäßige Rückstruktur mit Default-Werten zur Robustheit.
+    """
+    Extrahiert die wichtigsten Felder aus der API-Antwort.
+    - Gibt ein Dict mit keys: location_name, temperature_celsius, humidity_percent, weather_description, raw
+    - Werte können None sein, falls Daten fehlen; Funktion ist deterministisch und ohne Seiteneffekte —
+      daher leicht zu testen.
+    """
     result = {
-        "location_name": None,  # z.B. "Berlin"
-        "temperature_celsius": None,  # z.B. 5.2
-        "humidity_percent": None,  # z.B. 87
-        "weather_description": None,  # z.B. "light rain"
+        "location_name": None,
+        "temperature_celsius": None,
+        "humidity_percent": None,
+        "weather_description": None,
+        "raw": None,
     }
-    # Versuche, den Ortsnamen (name) zu lesen.
-    result["location_name"] = api_response.get("name")  # 'name' ist der Ortsname laut API
-    # 'main' enthält Temperatur und Luftfeuchte – sichere Zugriffe mit .get.
-    main = api_response.get("main", {})  # 'main' ist ein dict, fallback zu leerem dict
-    result["temperature_celsius"] = main.get("temp")  # 'temp' ist Temperatur in gewählten Units
-    result["humidity_percent"] = main.get("humidity")  # 'humidity' ist in Prozent
-    # 'weather' ist üblicherweise eine Liste; wir nehmen das erste Element und dessen 'description'.
-    weather_list = api_response.get("weather", [])  # fallback: leere Liste
-    if weather_list and isinstance(weather_list, list):
-        # Falls vorhanden, nimm die Beschreibung des ersten Eintrags.
-        result["weather_description"] = weather_list[0].get("description")
-    # Gib das strukturierte Ergebnis zurück.
-    return result  # Rückgabe des aufbereiteten Results
 
-# Ausgabe-Funktion: Formatiert und druckt die Daten in der Konsole.
+    # Ortsname (falls vorhanden)
+    result["location_name"] = api_response.get("name")
+
+    # Hauptdaten (temp, humidity)
+    main = api_response.get("main", {})
+    result["temperature_celsius"] = main.get("temp")
+    result["humidity_percent"] = main.get("humidity")
+
+    # Wetterbeschreibung: 'weather' ist typischerweise eine Liste mit mindestens einem Eintrag
+    weather_list = api_response.get("weather", [])
+    if weather_list and isinstance(weather_list, list):
+        result["weather_description"] = weather_list[0].get("description")
+
+    # Raw JSON als kompakter String für Logging/Debug
+    try:
+        result["raw"] = json.dumps(api_response, ensure_ascii=False)
+    except Exception:
+        result["raw"] = None
+
+    return result
+
 def display_weather(parsed: Dict[str, Optional[str]]) -> None:
-    # Lese einzelne Felder aus dem Dictionary mit Fallbacks.
-    location = parsed.get("location_name") or "Unbekannter Ort"  # Fallback-Text wenn kein Name vorhanden
-    temp = parsed.get("temperature_celsius")  # Temperatur (kann None sein)
-    humidity = parsed.get("humidity_percent")  # Luftfeuchte (kann None sein)
-    desc = parsed.get("weather_description") or "Keine Beschreibung verfügbar"  # Fallback-Beschreibung
-    # Drucke eine klare Kopfzeile mit Ort.
-    print(f"Wetter für: {location}")  # z.B. "Wetter für: Berlin"
-    # Wenn Temperatur vorhanden, formatiere sie schön (eine Nachkommastelle), ansonsten Hinweis.
+    """
+    Formatiert und gibt die Wetterinfos auf der Konsole aus.
+    - Nutzt verständliche Fallbacks falls Werte fehlen.
+    """
+    # Defensives Lesen der Felder
+    location = parsed.get("location_name") or "Unbekannter Ort"
+    temp = parsed.get("temperature_celsius")
+    humidity = parsed.get("humidity_percent")
+    desc = parsed.get("weather_description") or "Keine Beschreibung verfügbar"
+
+    # Ausgabe: Ort
+    print(f"Wetter für: {location}")
+
+    # Ausgabe: Temperatur (falls vorhanden) mit 1 Dezimalstelle, sonst Rohwert oder Hinweis
     if temp is not None:
         try:
-            # Versuche, die Temperatur als Float zu behandeln und formatiere auf 1 Nachkommastelle.
-            temp_num = float(temp)  # Umwandlung zu float
-            print(f"Temperatur: {temp_num:.1f} °C")  # Ausgabe z. B. "Temperatur: 4.7 °C"
+            temp_num = float(temp)
+            print(f"Temperatur: {temp_num:.1f} °C")
         except (TypeError, ValueError):
-            # Falls die Temperatur nicht in ein Float umgewandelt werden kann, gebe Rohwert aus.
-            print(f"Temperatur: {temp}")  # Roh-Angabe
+            print(f"Temperatur (Roh): {temp}")
     else:
-        # Wenn kein Temperaturwert vorhanden ist, Hinweis ausgeben.
-        print("Temperatur: Keine Daten verfügbar")  # Hinweis
-    # Wenn Luftfeuchte vorhanden, gib sie aus, sonst Hinweis.
+        print("Temperatur: Keine Daten verfügbar")
+
+    # Ausgabe: Luftfeuchte
     if humidity is not None:
-        print(f"Luftfeuchte: {humidity} %")  # Ausgabe z. B. "Luftfeuchte: 72 %"
+        print(f"Luftfeuchte: {humidity} %")
     else:
-        print("Luftfeuchte: Keine Daten verfügbar")  # Hinweis
-    # Drucke die Wetterbeschreibung (z. B. "leichter Regen").
-    print(f"Wetterbeschreibung: {desc}")  # Ausgabe der Beschreibung
+        print("Luftfeuchte: Keine Daten verfügbar")
 
-# Funktion zum Einlesen der PLZ vom Benutzer (kann später durch CLI-Argumente ersetzt werden).
-def prompt_for_zip() -> str:
-    # Fordere den Benutzer zur Eingabe der Postleitzahl auf.
-    zip_code = input("Bitte Postleitzahl (z.B. 10115) eingeben: ").strip()  # input() & strip() zum Säubern
-    # Wenn der Benutzer nichts eingegeben hat, beende das Programm mit einer freundlichen Meldung.
-    if not zip_code:
-        print("Keine Postleitzahl eingegeben. Abbruch.")  # Meldung
-        sys.exit(1)  # Beenden mit Fehlercode 1
-    # Gib die eingelesene PLZ zurück.
-    return zip_code  # Rückgabe der PLZ als String
+    # Ausgabe: Beschreibung
+    print(f"Wetterbeschreibung: {desc}")
 
-# Hauptprogramm / Entrypoint
-def main() -> None:
-    # Lies den API-Key.
-    api_key = get_api_key()  # Hole API-Key aus Umgebungsvariablen
-    # Wenn kein API-Key vorhanden ist, informiere den Benutzer und beende.
-    if not api_key:
-        print("Fehler: OPENWEATHER_API_KEY ist nicht gesetzt.")  # Fehlermeldung
-        print("Setze die Umgebungsvariable OPENWEATHER_API_KEY und versuche es erneut.")  # Hilfestellung
-        sys.exit(2)  # Beende mit anderem Fehlercode
-    # Frage den Benutzer nach der PLZ.
-    zip_code = prompt_for_zip()  # Lese PLZ
-    # Optional: Standard-Ländercode 'DE' verwenden; später durch optionalen Parameter erweiterbar.
-    country_code = "DE"  # Default-Ländercode
-    # Versuche die API zu kontaktieren und Daten zu holen; fange Fehler ab um hilfreiche Meldungen zu geben.
+def log_to_csv(csv_path: str, zip_code: str, country_code: str, result: Dict) -> None:
+    """
+    Hängt eine Zeile mit Abfrageergebnis an die CSV an.
+    - Schreibt Header, falls Datei neu ist.
+    - Verwaltet Verzeichniserstellung und Windows-newline Verhalten.
+    - Fehler beim Loggen führen nur zu einer Warnung (keine Exception).
+    """
     try:
-        api_response = fetch_current_weather(api_key=api_key, zip_code=zip_code, country_code=country_code)  # API-Call
-    except Exception as e:
-        # Bei einem Fehler während der Anfrage: Fehlermeldung zeigen und beenden.
-        print(f"Fehler beim Abrufen der Wetterdaten: {e}")  # Fehlerausgabe
-        sys.exit(3)  # Beenden mit Fehlercode 3
-    # Wenn Anfrage erfolgreich war, parse die Rückgabe.
-    parsed = parse_weather_data(api_response)  # Daten aufbereiten
-    # Zeige die Daten in der Konsole an.
-    display_weather(parsed)  # Ausgabe
+        # Verzeichnis sicherstellen (z.B. logs/)
+        dirpath = os.path.dirname(csv_path)
+        if dirpath:
+            try:
+                os.makedirs(dirpath, exist_ok=True)
+            except Exception:
+                # Wenn Ordner nicht erstellt werden kann, fahren wir fort (Open kann später fehlschlagen)
+                pass
 
-# Standard-Python-Idiom um main() auszuführen, wenn das Skript direkt gestartet wird.
+        # Öffne Datei im Append-Modus; newline="" vermeidet CRLF-Doppelzeilen in Windows
+        with open(csv_path, mode="a", newline="", encoding="utf-8") as csvfile:
+            fieldnames = [
+                "timestamp_iso",
+                "zip",
+                "country",
+                "location",
+                "temperature_celsius",
+                "humidity_percent",
+                "weather_description",
+                "raw_json"
+            ]
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            # Prüfe, ob Datei neu ist (Header schreiben)
+            try:
+                is_new = os.path.getsize(csv_path) == 0
+            except OSError:
+                # Datei existiert nicht oder ist nicht zugreifbar -> behandeln als neu
+                is_new = True
+
+            if is_new:
+                writer.writeheader()
+
+            # Schreibe Zeile mit UTC-Zeitstempel
+            writer.writerow({
+                "timestamp_iso": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "zip": zip_code,
+                "country": country_code,
+                "location": result.get("location_name") or "",
+                "temperature_celsius": result.get("temperature_celsius") or "",
+                "humidity_percent": result.get("humidity_percent") or "",
+                "weather_description": result.get("weather_description") or "",
+                "raw_json": result.get("raw") or ""
+            })
+    except Exception as e:
+        # Logging-Fehler: nur Warnung ausgeben (keine Programmbeendigung)
+        print(f"Warnung: Konnte nicht in CSV loggen ({csv_path}): {e}")
+
+def prompt_for_zip_interactive() -> Tuple[str, str]:
+    """
+    Fragt den Nutzer interaktiv nach PLZ und optionalem Ländercode.
+    - Beendet das Programm mit Exit-Code 1, wenn keine PLZ eingegeben wird.
+    """
+    zip_code = input("Bitte Postleitzahl (z.B. 10115) eingeben: ").strip()
+    if not zip_code:
+        print("Keine Postleitzahl eingegeben. Abbruch.")
+        sys.exit(1)
+    country_code = input(f"Optionaler Ländercode (zwei Buchstaben, Default: {DEFAULT_COUNTRY}): ").strip() or DEFAULT_COUNTRY
+    return zip_code, country_code
+
+# ---------------------
+# Hauptprogramm / Entrypoint
+# ---------------------
+def main() -> None:
+    """
+    Programm-Flow:
+    1) Argumente parsen
+    2) optional .env laden
+    3) API-Key prüfen (OPENWEATHER_API_KEY)
+    4) PLZ/Land ermitteln (Arg oder interaktiv)
+    5) API aufrufen
+    6) Antwort parsen und anzeigen
+    7) optional in CSV loggen
+    """
+    # Argparse Setup
+    parser = argparse.ArgumentParser(description="Wetter CLI: PLZ -> aktuelles Wetter (OpenWeatherMap).")
+
+    # --zip / -z: Postleitzahl (optional)
+    parser.add_argument("--zip", "-z", dest="zip_code", help="Postleitzahl (z.B. 10115). Wenn nicht gesetzt, wird interaktiv gefragt.")
+    # --country / -c: Ländercode (Default DEFAULT_COUNTRY)
+    parser.add_argument("--country", "-c", dest="country_code", default=DEFAULT_COUNTRY, help=f"Ländercode (2 Buchstaben). Default: {DEFAULT_COUNTRY}")
+    # --log-csv: Pfad, an den Logs angehängt werden sollen
+    parser.add_argument("--log-csv", dest="log_csv", help="CSV-Dateipfad zum Anfügen der Abfrage-Logs (z.B. logs/logs.csv).")
+    # --dotenv: optionaler Pfad zu einer .env Datei
+    parser.add_argument("--dotenv", dest="dotenv_path", help="Optional: Pfad zu einer .env-Datei, die geladen werden soll (z.B. .env).")
+    # --raw: zeigt die rohe API-Antwort (JSON)
+    parser.add_argument("--raw", dest="raw", action="store_true", help="Gibt die rohe API-Antwort aus (Debug).")
+
+    # Parse die Kommandozeilenargumente
+    args = parser.parse_args()
+
+    # Lade .env falls vorhanden oder angefragt
+    if args.dotenv_path:
+        optional_load_dotenv(args.dotenv_path)
+    else:
+        optional_load_dotenv()
+
+    # Lese API-Key (möglicherweise durch .env gesetzt)
+    api_key = get_api_key()
+    if not api_key:
+        # Kein Key -> verständliche Nachricht und saubere Beendigung
+        print("Fehler: OPENWEATHER_API_KEY ist nicht gesetzt. Setze die Umgebungsvariable oder nutze --dotenv.")
+        print("Beispiel (PowerShell): $env:OPENWEATHER_API_KEY='DEIN_KEY'")
+        sys.exit(2)  # Exit-Code 2: fehlende Konfiguration / API-Key
+
+    # PLZ & Ländercode bestimmen: CLI-Argumente haben Vorrang
+    if args.zip_code:
+        zip_code = args.zip_code.strip()
+        country_code = args.country_code.strip()
+    else:
+        zip_code, country_code = prompt_for_zip_interactive()
+
+    # API-Aufruf und Fehlerbehandlung
+    try:
+        api_response = fetch_current_weather(api_key=api_key, zip_code=zip_code, country_code=country_code)
+    except Exception as e:
+        print(f"Fehler beim Abrufen der Wetterdaten: {e}")
+        sys.exit(3)  # Exit-Code 3: Fehler bei API/Netzwerk
+
+    # Parse die Antwort in die relevanten Felder
+    parsed = parse_weather_data(api_response)
+
+    # Optional: rohe JSON-Antwort ausgeben (für Debug)
+    if args.raw:
+        print("=== ROHE API-ANTWORT ===")
+        try:
+            print(json.dumps(api_response, indent=2, ensure_ascii=False))
+        except Exception:
+            print(repr(api_response))
+        print("========================")
+
+    # Anzeige der aufbereiteten Informationen
+    display_weather(parsed)
+
+    # Optionales Logging in CSV
+    if args.log_csv:
+        csv_path = args.log_csv
+        log_to_csv(csv_path, zip_code, country_code, parsed)
+
+# Standard-Eintrittspunkt: nur ausführen, wenn Datei direkt gestartet wird
 if __name__ == "__main__":
-    # Aufruf von main(), Programmstart.
-    main()  # Start der Anwendung
+    main()
