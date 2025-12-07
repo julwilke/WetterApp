@@ -23,7 +23,7 @@
   - andernfalls müsste jedes mal ein `HTTP`-Reload gemacht werden
 
 - **C) CSV-Provider vorbereiten**
-  - `self.provider = CSVWeatherProvider("weather_sample.csv")` 
+  - `self.provider = CSVWeatherProvider("weather_sample.csv")`
   - hier wird der Provider noch nicht mit Daten geläden, nur vorbereitet (*Lazy Loading*)
 
 - **D) Initialwerte setzen** (Delayed Initialization)
@@ -68,7 +68,7 @@
   - navigiert nach `/data/samples`
   - baut dort absoluten Pfad zur `.csv`
   - Lädt die Dater erst beim Aufruf von `get_weather_for_city()`
-- Beim Abfragen: 
+- Beim Abfragen:
   - `df = pd.read_csv(self.csv_path)`
   - `df_city = df[df["CITY"].str.lower() == city.lower()]`
   - wenn Stadt vorhanden:
