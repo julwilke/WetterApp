@@ -7,7 +7,7 @@ venv/
 .env
 
 #map.html
-weather_dashboard/static/map/
+map.html
 
 #prüfen
 data/cache/* 
