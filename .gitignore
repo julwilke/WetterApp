@@ -6,8 +6,8 @@
 venv/
 .env
 
-#map.html
-map.html
+#map.html Dateien
+weather_dashboard/static/map/
 
 #prüfen
 data/cache/* 
