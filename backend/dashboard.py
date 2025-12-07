@@ -15,7 +15,7 @@ import os
 #   BACKEND-CORE 
 # ============================================
 class WeatherDashboard:
-
+    """Klasse für das WeatherDashboard"""
     def __init__(self):
 
         # Frontend-Ordner korrekt setzen
@@ -55,7 +55,11 @@ class WeatherDashboard:
     #J: Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
 
     def define_routes(self):
+        """Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird.
 
+        Returns:
+            _type_: _description_
+        """
         @self.app.route('/')
         def index():
 

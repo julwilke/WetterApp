@@ -13,6 +13,9 @@ weather_dashboard/static/map/
 data/cache/* 
 data/db/*
 
+#pdoc Dokumentation
+/docs_generated
+
 #========================================#
 #=========== GitHub/ChatGPT ============ #
 #========================================#
