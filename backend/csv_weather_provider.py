@@ -9,10 +9,14 @@ import os               #J: Für Fehlerbehandlung falls die Datei/Pfad nicht gef
 class CSVWeatherProvider:
 
     def __init__(self, filename="weather_sample.csv"): #J: Hier nicht den Pfad, sondern den Dateinamen nehmen 'filename'
-        
+        """_summary_
+
+        Args:
+            filename (str, optional): Datei, die geladen werden soll. Defaults to "weather_sample.csv".
+        """
         # Neu hinzugefügt um die Probleme beim verschieben der app.py oder .csv (Pfadprobleme) zu lösen:
 
-        # Ordner, in dem dieses Skript leigt /WetterApp/backend
+        # Ordner, in dem dieses Skript liegt /WetterApp/backend
         base_dir = os.path.dirname(os.path.abspath(__file__))   
 
         # Project-Root-Pfad ("Überordner") bestimmen
@@ -35,21 +39,23 @@ class CSVWeatherProvider:
     def get_weather_for_city(self, city: str):
         """Liest CSV, filtert nach Stadt und gibt Wetterdaten als Dictionary zurück."""
 
-        #J: Try Except hinzugefügt falls Pfad nicht gefunden wurde
+        #1) CSV laden (J: Try Except hinzugefügt falls Pfad nicht gefunden wurde)
         try:
             df = pd.read_csv(self.csv_path)
         except Exception as e:
             print(f"CSV konnte nicht geladen werden: {e}")
+            return None
 
-        # Filtern auf Stadt
+        # 2) Filtern auf Stadt
         df_city = df[df["CITY"].str.lower() == city.lower()]
 
         if df_city.empty:
             return None
 
+        # 3) Datensatz extrahieren
         row = df_city.iloc[0].to_dict()
 
-        # RETURN inkl. DUMMY Werte für Frontend übergeben bei Bedarf
+        # 4) Weather-Dictionairy generieren (RETURN inkl. DUMMY Werte für Frontend übergeben bei Bedarf)
         return {
             "city": row["CITY"],
             "currentTemperature": row["TEMPERATURE"],
