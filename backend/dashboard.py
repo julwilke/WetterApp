@@ -67,7 +67,7 @@ class WeatherDashboard:
 
             data = self.provider.get_weather_for_city(self.city)
             if not data:
-                return jsonify({"error": "City not found in CSV", "city": self.city})
+                return jsonify({"❌": "City not found in CSV", "city": self.city})
 
             # Karte **nicht** hier generieren
             lat, lon = self.fetch_coordinates(self.city)
@@ -103,7 +103,7 @@ class WeatherDashboard:
             if updated:
                 self.weather_data = updated
 
-            # 🌍 Karte NEU GENERIEREN (wichtig!) / Koordinaten holen
+            # Karte NEU GENERIEREN (wichtig!) / Koordinaten holen
             lat, lon = self.fetch_coordinates(self.city)
             
             generate_map.generate_map(
@@ -147,7 +147,7 @@ class WeatherDashboard:
             loc = self.geolocator.geocode(city)
             if loc:
                 return loc.latitude, loc.longitude
-        except:
+        except: #J: Hier noch was einfügen?
             pass
         return 52.5200, 13.4050  # Default Berlin
 

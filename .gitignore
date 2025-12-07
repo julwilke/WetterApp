@@ -1,14 +1,17 @@
 #================================================#
 #===== Eigene / Anwendungsbezogene Ignores ===== #
 #================================================#
+
+#persönliche venvs
 venv/
 .env
+
+#map.html
+weather_dashboard/static/map/
 
 #prüfen
 data/cache/* 
 data/db/*
-
-__pycache__/
 
 #========================================#
 #=========== GitHub/ChatGPT ============ #
