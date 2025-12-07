@@ -1,1 +1,0 @@
-# Falls wir mit SQLite als persistente Speicherung arbeiten
