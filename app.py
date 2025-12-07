@@ -15,7 +15,6 @@ Initialisiert:
 - Optionale CLI Argumente
 """
 
-
 # =============== IMPORTS ====================
 
 #from logging import dieLoggingFunktion     #J: Für logging "der Dinge die passieren"
@@ -44,6 +43,8 @@ def main():
     #try: #Grundsätzliche "Fatal Errors" abfangen, folgt noch
     app = dashboard.WeatherDashboard()   # Backend initialisieren
     app.run(city="Berlin")               # Server + Socket starten
+
+    
 
     #except Exception as e:
         #logging.exception("Fataler Fehler im Backend!: ")

@@ -85,7 +85,7 @@ class WeatherDashboard:
             })
 
     # ========================================
-    # SOCKET → erhält Stadt vom Frontend
+    # SOCKET → erhält (neue) Stadt vom Frontend
     # ========================================
     def define_socket_events(self):
 
@@ -97,7 +97,7 @@ class WeatherDashboard:
             if not new_city: #Leerer Return falls es dieselbe Stadt ist
                 return
             
-            #Neue Stad übernehmen
+            #Neue Stadt übernehmen
             print(f"🌍 Neue Stadt gewählt → {self.city}")  
             self.city = new_city                            
 
@@ -158,7 +158,7 @@ class WeatherDashboard:
     # ========================================
     # SERVER STARTEN
     # ========================================
-    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jertzt city als argument (Berlin als DEFAULT)
+    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jertzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
         """
         - Hier initialisieren, da nun Parameter bekannt sind
         - Jetzt dürfen Daten geladen werden

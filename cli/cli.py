@@ -20,6 +20,10 @@ import requests  # requests: einfache HTTP-Anfragen in Python
 # 'typing' für optionale Typannotationen (Verbesserung der Lesbarkeit).
 from typing import Optional, Dict  # Optional, Dict: Typen für Funktionsergebnisse
 
+# dotenv verwenden, um persänlichen API Key aus '.env' zu verwenden
+from dotenv import load_dotenv
+load_dotenv()
+
 # Konstanten definieren: Basis-URL der OpenWeatherMap-API für den aktuellen Wetterabruf.
 OPENWEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"  # Basis-Endpunkt für "current weather"
 
