@@ -9,7 +9,6 @@ from datetime import datetime
 from backend.csv_weather_provider import CSVWeatherProvider
 from geopy.geocoders import Nominatim
 from backend import generate_map
-import os
 
 # ============================================
 #   BACKEND-CORE 
