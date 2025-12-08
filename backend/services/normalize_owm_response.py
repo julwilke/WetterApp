@@ -4,7 +4,7 @@
 #........Leere dicts ( {} ) als Ersatzwerte damit das Frontend nihct crasht
 
 
-#Vielleich allgemeiner fassen, gibt es einen Weg, dass alle API-Clients funktionieren?
+# Vielleicht allgemeiner fassen, gibt es einen Weg, dass alle API-Clients funktionieren?
 
 import datetime
 
