@@ -43,14 +43,12 @@ def main():
     
     print(f"Wetter-Dashboard Backend v{__version__} startet...")
 
-    #try: #Grundsätzliche "Fatal Errors" abfangen, folgt noch
+    # TODO: Comprehensive error handling for fatal backend errors will be implemented in a future release.
     app = dashboard.WeatherDashboard()   # Backend initialisieren
     app.run(city="Berlin")               # Server + Socket starten
 
     
 
-    #except Exception as e:
-        #logging.exception("Fataler Fehler im Backend!: ")
 
 # ============================================
 #  3) SCRIPT START (Entry-Point)
