@@ -158,7 +158,7 @@ class WeatherDashboard:
     # ========================================
     # SERVER STARTEN
     # ========================================
-    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jertzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
+    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jetzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
         """
         - Hier initialisieren, da nun Parameter bekannt sind
         - Jetzt dürfen Daten geladen werden
