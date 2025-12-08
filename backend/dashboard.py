@@ -151,8 +151,8 @@ class WeatherDashboard:
             loc = self.geolocator.geocode(city)
             if loc:
                 return loc.latitude, loc.longitude
-        except: #J: Hier noch was einfügen?
-            pass
+        except Exception as e:
+            print(f"Error geocoding {city}: {e}")
         return 52.5200, 13.4050  # Default Berlin
 
     # ========================================
