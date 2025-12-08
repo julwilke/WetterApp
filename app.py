@@ -17,10 +17,13 @@ Initialisiert:
 
 # =============== IMPORTS ====================
 
+# TODO: Uncomment and use these imports when implementing:
+#   - Logging system events
+#   - Loading .env files with API keys
+#   - Command-line argument parsing
 #from logging import dieLoggingFunktion     #J: Für logging "der Dinge die passieren"
 #from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
 #import argparse                            #J: Für Konsolenausgabe
-
 from backend import dashboard
 
 # ============================================
