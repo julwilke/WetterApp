@@ -572,18 +572,6 @@
             console.log("🔔 Update vom Server:", data);
 
             for (let key in data) {
-                // City anzeigen
-                if (key === 'city') {
-                    const cityDisplay = document.getElementById('cityDisplay');
-                    if (cityDisplay) cityDisplay.innerText = data.city;
-
-                    // Karte neu laden
-                    const iframe = document.getElementById('customLargeBlockMapIframe');
-                    if (iframe) {
-                        const src = iframe.src.split('?')[0];
-                        iframe.src = `${src}?ts=${new Date().getTime()}`;
-                    }
-                }
 
                 // Spezialfall: windDirection
                 if (key === 'windDirection') {
@@ -601,10 +589,36 @@
                     }
                 }
 
+                if (key.endsWith('_history') && Array.isArray(data[key])) {
+                    const container = document.getElementById(key); // z. B. <div id="currentTemperature_history"></div>
+                    if (container) {
+                        container.innerHTML = '';
+                        data[key].forEach(entry => {
+                            const p = document.createElement('p');
+                            p.textContent = `Stunde ${entry.hr}: ${entry.value}`;
+                            container.appendChild(p);
+                        });
+                    }
+                }
+
                 // Standard: alle Elemente aktualisieren
                 if (elements[key]) {
                     elements[key].innerText = data[key];
                 }
+
+                // City anzeigen
+                if (key === 'city') {
+                    const cityDisplay = document.getElementById('cityDisplay');
+                    if (cityDisplay) cityDisplay.innerText = data.city;
+
+                    // Karte neu laden
+                    const iframe = document.getElementById('customLargeBlockMapIframe');
+                    if (iframe) {
+                        const src = iframe.src.split('?')[0];
+                        iframe.src = `${src}?ts=${new Date().getTime()}`;
+                    }
+                }
+
             }
 
             // Optional: Plot neu erzeugen, wenn Funktion existiert
