@@ -2,10 +2,9 @@
 #                   API-CALL                             #
 ##########################################################
 
-#def fetch_weather()
+#def fetch_weather_api()
 
-#...
-#...
-#...
+# irgendein code.....
 
-#return raw
+#return 
+#ERGEBNIS -> dashboard.py 

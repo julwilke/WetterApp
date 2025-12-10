@@ -37,11 +37,13 @@ def _to_float(value, default=None):
 
     if value is None:
         return default
+    
     if isinstance(value, numbers.Number):
         try:
             return float(value)
         except (TypeError, ValueError):
             return default
+        
     if isinstance(value, str):
         value = value.strip()
         if value == "":
@@ -155,8 +157,8 @@ def normalize_weather_data(raw: dict) -> dict:
     snow1h = _to_float(raw.get("snow1h") or raw.get("snow_1h"), default=0.0)
     snow3h = _to_float(raw.get("snow3h") or raw.get("snow_3h"), default=0.0)
 
-    # Rückgabe des normalisierten Dictionaries
-    return {
+    # Dictionairy Final zusammenstellen
+    normalized_data = {
         "city": city,
         "currentTemperature": temp,
         "feelsLike": feels_like,
@@ -188,3 +190,7 @@ def normalize_weather_data(raw: dict) -> dict:
         "pressureTrend": pressure_trend,
         "fog": fog,
     }
+
+    # Rückgabe des normalisierten Datensatzes
+    return normalized_data        
+    

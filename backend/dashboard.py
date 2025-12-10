@@ -22,8 +22,8 @@ from flask_socketio import SocketIO
 
 from geopy.geocoders import Nominatim
 
-from backend.csv_weather_provider import CSVWeatherProvider
-from backend import generate_map
+from backend.provider.csv_weather_provider import CSVWeatherProvider
+from backend.services import generate_map
 
 #from services import data_normalizer   # J: aktuell noch nicht hier verwendet
 #from venv import logger                # J: Woher kam das?
