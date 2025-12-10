@@ -60,16 +60,16 @@ Schnellstart (PowerShell & Bash Beispiele)
 CSV lesen und anzeigen:
 - PowerShell:
   $env:OPENWEATHER_API_KEY = "..."  # nur falls du später API brauchst
-  python -m cli.cli --file .\sample.csv
+  python -m cli.cli --file ./cli\sample.csv
 
 - Bash:
-  python -m cli.cli --file sample.csv
+  python -m cli.cli --file cli/sample.csv
 
 CSV per stdin (pipe):
 - PowerShell:
-  Get-Content .\sample.csv -Raw | python -m cli.cli
+  Get-Content ./cli\sample.csv -Raw | python -m cli.cli
 - Bash:
-  cat sample.csv | python -m cli.cli
+  cat cli/sample.csv | python -m cli.cli
 
 OpenWeather (API‑Modus):
 - Setze Key als Umgebungsvariable (empfohlen):
@@ -79,20 +79,20 @@ OpenWeather (API‑Modus):
   python -m cli.cli --ow-city "Berlin" --ow-key DEIN_KEY
 
 Loggen in CSV:
-- python -m cli.cli --file .\sample.csv --log .\logged.csv
-- python -m cli.cli --ow-city "Berlin" --ow-key DEIN_KEY --log .\logged.csv
+- python -m cli.cli --file cli/.\sample.csv --log .\logged.csv
+- python -m cli.cli --ow-city "Berlin" --ow-key DEIN KEY  --log cli/.\logged.csv
 
 JSON‑Ausgabe (z. B. für Pipes):
-- python -m cli.cli --file .\sample.csv --format json
+- python -m cli.cli --file cli/.\sample.csv --format json
 
 Nur in Log schreiben (keine Konsole):
-- python -m cli.cli --file .\sample.csv --log .\logged.csv --only-log
+- python -m cli.cli --file cli/.\sample.csv --log .\logged.csv --only-log
 
 Keine Konsolenausgabe (nur Fehler auf stderr):
-- python -m cli.cli --file .\sample.csv --quiet
+- python -m cli.cli --file cli/.\sample.csv --quiet
 
 Eigenes Feldset anzeigen (Reihenfolge wichtig):
-- python -m cli.cli --file .\sample.csv --fields "date,city,temp,wind,precipitation"
+- python -m cli.cli --file cli/.\sample.csv --fields "date,city,temp,wind,precipitation"
 
 ---
 
