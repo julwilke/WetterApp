@@ -9,7 +9,6 @@ from datetime import datetime
 from backend.csv_weather_provider import CSVWeatherProvider
 from geopy.geocoders import Nominatim
 from backend import generate_map
-import os
 
 # ============================================
 #   BACKEND-CORE 
@@ -151,14 +150,14 @@ class WeatherDashboard:
             loc = self.geolocator.geocode(city)
             if loc:
                 return loc.latitude, loc.longitude
-        except: #J: Hier noch was einfügen?
-            pass
+        except Exception as e:
+            print(f"Error geocoding {city}: {e}")
         return 52.5200, 13.4050  # Default Berlin
 
     # ========================================
     # SERVER STARTEN
     # ========================================
-    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jertzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
+    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jetzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
         """
         - Hier initialisieren, da nun Parameter bekannt sind
         - Jetzt dürfen Daten geladen werden

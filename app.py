@@ -17,10 +17,13 @@ Initialisiert:
 
 # =============== IMPORTS ====================
 
+# TODO: Uncomment and use these imports when implementing:
+#   - Logging system events
+#   - Loading .env files with API keys
+#   - Command-line argument parsing
 #from logging import dieLoggingFunktion     #J: Für logging "der Dinge die passieren"
 #from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
 #import argparse                            #J: Für Konsolenausgabe
-
 from backend import dashboard
 
 # ============================================
@@ -40,14 +43,12 @@ def main():
     
     print(f"Wetter-Dashboard Backend v{__version__} startet...")
 
-    #try: #Grundsätzliche "Fatal Errors" abfangen, folgt noch
+    # TODO: Comprehensive error handling for fatal backend errors will be implemented in a future release.
     app = dashboard.WeatherDashboard()   # Backend initialisieren
     app.run(city="Berlin")               # Server + Socket starten
 
     
 
-    #except Exception as e:
-        #logging.exception("Fataler Fehler im Backend!: ")
 
 # ============================================
 #  3) SCRIPT START (Entry-Point)
