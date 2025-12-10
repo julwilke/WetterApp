@@ -1,20 +1,27 @@
 ###############################################
-#   🌦 CSV-WEATHER-PROVIDER – 1.0.0           #
+#   🌦 CSV-WEATHER-PROVIDER – 1.0.1           #
 ###############################################
 
 # =============== IMPORTS ====================
 import pandas as pd
 import os               #J: Für Fehlerbehandlung falls die Datei/Pfad nicht gefunden wurde
+import logging
 
+from backend.services import data_normalizer
+
+# Logger für dieses Modul
+logger = logging.getLogger(__name__)
+
+
+
+
+# ===== KLASSE ERSTELLEN =====
 class CSVWeatherProvider:
+    """ Liest Wetterdaten aus einer CSV-Datei, normalisiert sie und stellt sie bereit. """
 
     def __init__(self, filename="weather_sample.csv"): #J: Hier nicht den Pfad, sondern den Dateinamen nehmen 'filename'
-        """_summary_
-
-        Args:
-            filename (str, optional): Datei, die geladen werden soll. Defaults to "weather_sample.csv".
-        """
-        # Neu hinzugefügt um die Probleme beim verschieben der app.py oder .csv (Pfadprobleme) zu lösen:
+        """Initialisiert den CSVWeatherProvider mit dem Pfad zur CSV-Datei"""
+        # J: Neu hinzugefügt um die Probleme beim verschieben der app.py oder .csv (Pfadprobleme) zu lösen:
 
         # Ordner, in dem dieses Skript liegt /WetterApp/backend
         base_dir = os.path.dirname(os.path.abspath(__file__))   
@@ -31,9 +38,9 @@ class CSVWeatherProvider:
 
         #Fehler throwen falls nicht gefunden
         if not os.path.exists(self.csv_path):   
-            print(f"CSV nicht gefunden!: {self.csv_path}")
+            logger.error(f"CSV-Datei nicht gefunden unter: {self.csv_path}")
         else:
-            print(f"CSV geladen aus: {self.csv_path}")
+            logger.info(f"CSV-Date geladen aus {self.csv_path}")
 
 
     def get_weather_for_city(self, city: str):
@@ -43,48 +50,24 @@ class CSVWeatherProvider:
         try:
             df = pd.read_csv(self.csv_path)
         except Exception as e:
-            print(f"CSV konnte nicht geladen werden: {e}")
+            logger.error(f"CSV konnte nicht geladen werden: {e}")
             return None
 
         # 2) Filtern auf Stadt
         df_city = df[df["CITY"].str.lower() == city.lower()]
 
         if df_city.empty:
+            logger.info(f"Keine Wetterdaten für Stadt '{city}' in der CSV-Datei gefunden.") 
             return None
 
-        # 3) Datensatz extrahieren
+        # 3) Datensatz extrahieren in dict Form
         row = df_city.iloc[0].to_dict()
 
-        # 4) Weather-Dictionairy generieren (RETURN inkl. DUMMY Werte für Frontend übergeben bei Bedarf)
-        return {
-            "city": row["CITY"],
-            "currentTemperature": row["TEMPERATURE"],
-            "feelsLike": row["TEMPERATURE"],      
-            "tempMin": row["TEMPERATURE"] - 2,
-            "tempMax": row["TEMPERATURE"] + 2,
-            "humidity": 50,
-            "pressure": 1013,
-            "weatherDescription": "klar",
-            "cloudCoverage": 0,
-            "rain1h": 0,
-            "rain3h": 0,
-            "snow1h": 0,
-            "snow3h": 0,
-            "windSpeed": 5,
-            "windGust": 7,
-            "windDirection": 90,
-            "uvIndex": 3,
-            "sunrise": "06:30",
-            "sunset": "18:30",
-            "visibility": 10000,
-            "dewPoint": 10,
-            "airQualityIndex": 50,
-            "pm10": 20,
-            "pm2_5": 10,
-            "co": 0.3,
-            "no2": 15,
-            "o3": 40,
-            "pollenCount": 0,
-            "pressureTrend": "stabil",
-            "fog": False,
-        }
+        # 4) Normalisieren der Daten (immernoch dict Form)
+        normalized_data = data_normalizer.normalize_csv_data(row)
+
+        logger.info(f"Wetterdaten für Stadt '{city}' erfolgreich aus CSV geladen.")
+
+        # 5) Daten zurückgeben (inkl. aller nötigen Felder und Normalisierung und Default-Werte)       
+        return (normalized_data)
+           

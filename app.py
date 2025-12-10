@@ -1,8 +1,8 @@
 ##############################################
-#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.0  #
+#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.1  #
 ##############################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 #Docstring mit Minimalbeschreibung
 """
@@ -10,27 +10,28 @@ WetterApp - Backend Entry Point
 --------------------------------
 Initialisiert:
 - Logging
-- Environment Variablen
+- TODO: Environment Variablen
 - Dashboard Backend
 - Optionale CLI Argumente
 """
 
 # =============== IMPORTS ====================
 
-# TODO: Uncomment and use these imports when implementing:
-#   - Logging system events
-#   - Loading .env files with API keys
-#   - Command-line argument parsing
-#from logging import dieLoggingFunktion     #J: Für logging "der Dinge die passieren"
-#from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
-#import argparse                            #J: Für Konsolenausgabe
-from backend import dashboard
+#TODO: from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
+#TODO: falls nötig: import argparse                 
+
+import logging
+# Im Rest des Programms dann nur noch logger = logging.getLogger(__name__) nutzen und dann...
+# z.B. logger.info("Nachricht"), logger.warning("Warnung"), logger.error("Fehler")
+
+from backend import dashboard 
+from backend.logging_config import configure_logging  #J: Logging Konfiguration importieren
 
 # ============================================
-#  1) Konsolen Argumente lesen
+#  1) Konsolen Argumente lesen (OPTIONAL)
 # ============================================
 
-#def parse_args(): ...
+#def parse_args(): 
 
 # ============================================
 #  2) HAUPT-FUNKTION - main-Boot-Sequenz
@@ -41,13 +42,20 @@ def main():
     Erstellt eine Instanz von WeatherDashboard und startet den Server.
     """
     
-    print(f"Wetter-Dashboard Backend v{__version__} startet...")
+    # 1) Logging konfigurieren
+    configure_logging()
 
-    # TODO: Comprehensive error handling for fatal backend errors will be implemented in a future release.
-    app = dashboard.WeatherDashboard()   # Backend initialisieren
-    app.run(city="Berlin")               # Server + Socket starten
+    logger = logging.getLogger(__name__)
+    logger.info(f"Wetter-Dashboard Backend v{__version__} startet...")    
 
-    
+    # 2) TODO: .env Datei laden (API-Keys etc.)
+    #load_dotenv()  #J: Lädt die .env Datei im Projektverzeichnis
+
+    # 3) Dashboard Backend initialisieren und starten
+    app = dashboard.WeatherDashboard() 
+
+    # 4) Server starten (Standard-Stadt kann hier übergeben werden)
+    app.run(city="Berlin")               
 
 
 # ============================================
