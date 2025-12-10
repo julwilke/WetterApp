@@ -1,1 +1,3 @@
-__version__ = "1.0.0"
+# Package initializer for cli
+# Wichtig: keine Imports von Submodulen hier, um Importzyklen zu vermeiden.
+__all__ = []
