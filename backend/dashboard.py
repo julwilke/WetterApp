@@ -81,7 +81,19 @@ class WeatherDashboard:
     def define_routes(self):
         """Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird."""
        
-        # Route für die Hauptseite
+       # Route für den API-Status (Dummy) später evtl. erweitern
+        @self.app.route('/status')
+        def status():
+            """
+            Einfache Status-Route für das API-Status-Menü im Frontend.
+            Aktuell Dummy: keine echten API-Checks.
+            """
+            return jsonify({
+                "apis": {},
+                "lastPolled": datetime.utcnow().isoformat() + "Z"
+            })
+
+        # Route für die Hauptseite     
         @self.app.route('/')
         def index():
             return render_template('index.html')
@@ -184,7 +196,7 @@ class WeatherDashboard:
             # ... wenn String, trimmen und prüfen ob leer
             new_city_str = str(new_city).strip() #String erzwingen und trimmen
             if new_city_str == "":
-                logger.info("cityInpu: Leerer Stadtname empfangen, ignoriere Anfrage.")
+                logger.info("cityInput: Leerer Stadtname empfangen, ignoriere Anfrage.")
                 return
             
             # Prüfen, ob die neue Stadt == der aktuellen Stadt ist
@@ -300,6 +312,14 @@ class WeatherDashboard:
         self.weather_data = data
         self.last_polled = datetime.utcnow()
 
+        # Karte erstellen
+        lat, lon = self.fetch_coordinates(self.city)
+        try:
+            current_temp = self.weather_data.get("currentTemperature", "--")
+            generate_map.generate_map(lat, lon, temp=current_temp)
+        except Exception as e:
+            logger.error(f"Fehler beim Generieren der Karte für Stadt '{self.city}': {e}")
+
 
 
     # ========================================
@@ -350,7 +370,10 @@ class WeatherDashboard:
         - Vereinfachung für Tests und Debugging
         """
 
-        #HIER WIRD DANN ENDLICH INITIALISIERT!
+        # Initialisierung mit Startstadt
+        self.initialize(city)
+
+        # Loggen der Start-Informationen
         logger.info("🚀 Dashboard läuft → http://127.0.0.1:5000")
         logger.info("📡 Websocket aktiv – UI lädt Live-Daten")
 

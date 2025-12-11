@@ -1,15 +1,18 @@
 ##############################################
-#   🌦 WETTER-DASHBOARD – MAP GENERATOR 1.1 #
+#   🌦 WETTER-DASHBOARD – MAP GENERATOR 1.0.1
 ##############################################
 
 # =============== IMPORTS ====================
 import os
 import folium
+import logging
+
+# Logger für dieses Modul
+logger = logging.getLogger(__name__)
 
 # ============================================
-#   KONSTANTEN / ORDNER (J: Nach unten verschoben und mit "dynamischen" Pfaden angepasst)
+#   OLD_ KONSTANTEN / ORDNER (J: Nach unten verschoben und mit "dynamischen" Pfaden angepasst)
 # ============================================
-# ...
 
 
 # ============================================
@@ -26,7 +29,7 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
         temp (str/int): Temperatur für Marker
         zoom (int): Zoom-Level der Karte
     """
-    print(f"🗺️  Erstelle Karte für Koordinaten: {lat}, {lon}")
+    logger.info(f"🗺️  Erstelle Karte für Koordinaten: {lat}, {lon}, Temp={temp}")
 
     # Neue Folium-Karte
     m = folium.Map(location=[lat, lon], zoom_start=zoom)
@@ -67,12 +70,13 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
         tooltip=f"{temp}°C"
     ).add_to(m)
 
-    # Zielordner für die Map-Datei
-    # backend/
+    # ============== SPEICHERN DER KARTE ==============
+
+    # backend/services/
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
     # WetterApp/
-    project_root = os.path.abspath(os.path.join(base_dir, ".."))
+    project_root = os.path.abspath(os.path.join(base_dir, "..", ".."))
 
     # WetterApp/weather_dashboard/static/map
     map_dir = os.path.join(project_root, "weather_dashboard", "static", "map")
@@ -87,4 +91,4 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
     m.save(output_path)
 
     #Ausgabe Konsole
-    print(f"✅ Karte gespeichert unter: {output_path}")
+    logger.info(f"✅ Karte gespeichert unter: {output_path}")

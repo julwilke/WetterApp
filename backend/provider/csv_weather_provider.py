@@ -26,8 +26,8 @@ class CSVWeatherProvider:
         # Ordner, in dem dieses Skript liegt /WetterApp/backend
         base_dir = os.path.dirname(os.path.abspath(__file__))   
 
-        # Project-Root-Pfad ("Überordner") bestimmen
-        project_root = os.path.abspath(os.path.join(base_dir, "..")) 
+        # Project-Root-Pfad ("Überordner") bestimmen -> von "hier" 2 Ordner hoch
+        project_root = os.path.abspath(os.path.join(base_dir, "..", "..")) 
 
         # /data/samples
         samples_dir = os.path.join(project_root, "data", "samples")
@@ -64,7 +64,7 @@ class CSVWeatherProvider:
         row = df_city.iloc[0].to_dict()
 
         # 4) Normalisieren der Daten (immernoch dict Form)
-        normalized_data = data_normalizer.normalize_csv_data(row)
+        normalized_data = data_normalizer.normalize_weather_data(row)
 
         logger.info(f"Wetterdaten für Stadt '{city}' erfolgreich aus CSV geladen.")
 

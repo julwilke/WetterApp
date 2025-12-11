@@ -8,6 +8,7 @@ venv/
 
 #map.html Dateien
 weather_dashboard/static/map/
+map.html
 
 #prüfen
 data/cache/* 
