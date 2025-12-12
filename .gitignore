@@ -17,6 +17,9 @@ data/db/*
 #pdoc Dokumentation
 /docs_generated
 
+#weather_cli logged.csv
+logged.csv
+
 #========================================#
 #=========== GitHub/ChatGPT ============ #
 #========================================#
