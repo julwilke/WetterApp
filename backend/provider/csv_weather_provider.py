@@ -60,7 +60,7 @@ class CSVWeatherProvider:
             logger.info(f"Keine Wetterdaten für Stadt '{city}' in der CSV-Datei gefunden.") 
             return None
 
-        # 3) Datensatz extrahieren in dict Form
+        # 3) Zeile des Datensatz extrahieren in dict Form
         row = df_city.iloc[0].to_dict()
 
         # 4) Normalisieren der Daten (immernoch dict Form)

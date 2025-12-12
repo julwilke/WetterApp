@@ -171,7 +171,7 @@ class WeatherDashboard:
         def socket_city_input(data):
             """Empfängt eine neue Stadt vom Frontend via Websocket."""
 
-            # ===== 1) FEHLER ABFANGEN =====
+            # ===== 1) EINGABEN ABFANGEN UND PRÜFEN OB O.K. =====
 
             # Prüfen ob Daten da sind, wenn nicht, leeren Dict nutzen
             if data is None:
@@ -207,33 +207,34 @@ class WeatherDashboard:
                     logger.info(f"cityInput: Stadt '{new_city_str}' ist bereits gesetzt, ignoriere Anfrage.")
                     return
                 
-            # ===== 2) NEUE STADT ÜBERNEHMEN =====
 
-            logger.info(f"🌍 Neue Stadt gewählt → '{new_city_str}' (vorher: '{self.city}')")
-            self.city = new_city_str
+            # ===== 2) NEUE STADT versuchen =====
 
+            logger.info(f"🌍 Versuche Stadtwechsel → '{new_city_str}' (vorher: '{self.city}')")
+            # VERALTET -> 'self.city = new_city_str' -> J: Nach unten in 3) verschoben weil: Wenn ich die Stadt önder steht oben IMMER ne neue Stadt im Dashboard, die karten und werte werden nur aktualisiert, wenn auch vorhadnen und geprüft.
+            # jetzt wird auch oben der Name erst aktualisiert, wenn wirklich eine neue Stadt übernommen wurde
 
-
-            # ===== 3) WETTERDATEN LADEN =====
-
-            # Sofort Wetter aktualisieren
-            updated_data = self.provider.get_weather_for_city(self.city)
+            # Sofort Wetter versuchen abzuholen
+            updated_data = self.provider.get_weather_for_city(new_city_str) # hier jetzt new_city_str
 
             if updated_data is None:
-                logger.warning(f"cityInput: Keine Wetterdaten für Stadt '{self.city}' gefunden.")
+                logger.warning(f"cityInput: Keine Wetterdaten für Stadt '{new_city_str}' gefunden.") # Hier jetzt New City
 
                 # Frontend benachrichtigen, dass Stadt nicht gefunden wurde #ggf. erweitern, falls Frontend in Zukunft mehr "versteht"
                 error_payload = {
-                    "city": self.city                    
+                    "city": self.city               # Wenn keine neue Stadt (new_city_str) gefunden wieder auf alte zurückfallen                    
                 }                    
 
                 self.socketio.emit("update", error_payload)
                 return
 
-            # Wenn Daten gefunden wurden, internen Zustand aktualisieren
+            # ===== 3) ERFOLG -> STADT ÜBERNEHMEN =====
+
+            logger.info(f"✅ Stadtwechsel erfolgreich: '{self. city}' → '{new_city_str}'") # Erst hier die Stadt wirklich übernommen, wenn sie auch gefunden wurde
+
+            self.city = new_city_str
             self.weather_data = updated_data
             self.last_polled = datetime.utcnow()
-
 
 
             # ===== 4) KARTE GENERIEREN =====

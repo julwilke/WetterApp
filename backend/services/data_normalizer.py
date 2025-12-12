@@ -13,7 +13,7 @@ def _to_int(value, default=None):
     if value is None:
         return default
     
-    # numpy, pandas, python numeric
+    # Numeric-Typen (int, float, numpy, pandas,...)
     if isinstance(value, numbers.Number):
         try:
             return int(value)

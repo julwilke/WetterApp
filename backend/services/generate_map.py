@@ -11,11 +11,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ============================================
-#   OLD_ KONSTANTEN / ORDNER (J: Nach unten verschoben und mit "dynamischen" Pfaden angepasst)
-# ============================================
-
-
-# ============================================
 #   MAP GENERIEREN
 # ============================================
 def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
@@ -70,24 +65,29 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
         tooltip=f"{temp}°C"
     ).add_to(m)
 
-    # ============== SPEICHERN DER KARTE ==============
 
-    # backend/services/
+
+    # ===== PFADE BESTIMMEN =====
+    # Dieses Skript liegt zurzeit in: WetterApp/backend/services/generate_map.py
+
+    # Dieses Skript liegt in:                   ...backend/services/
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # WetterApp/
+    # Zwei Ebenen höher ins Root:               .../WetterApp
     project_root = os.path.abspath(os.path.join(base_dir, "..", ".."))
 
-    # WetterApp/weather_dashboard/static/map
+    # Ziel-Speicherort für die Map:             .../WetterApp/weather_dashboard/static/map   
     map_dir = os.path.join(project_root, "weather_dashboard", "static", "map")
 
-    # Ordner sicher erstellen
-    os.makedirs(map_dir, exist_ok=True)
+    # Ordner sicher erstellen falls nicht vorhanden
+    os.makedirs(map_dir, exist_ok = True)
 
-    # Zieldatei
+    # Vollständiger Pfad zur Zieldatei
     output_path = os.path.join(map_dir, "map.html")
 
-    # Karte speichern
+
+
+    # ===== KARTE SPEICHERN =====
     m.save(output_path)
 
     #Ausgabe Konsole

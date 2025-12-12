@@ -16,15 +16,11 @@ Initialisiert:
 """
 
 # =============== IMPORTS ====================
-
-#TODO: from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
-#TODO: falls nötig: import argparse                 
-
+             
 import logging
 import os
 
 from dotenv import load_dotenv
-
 # Im Rest des Programms dann nur noch logger = logging.getLogger(__name__) nutzen und dann...
 # z.B. logger.info("Nachricht"), logger.warning("Warnung"), logger.error("Fehler")
 
@@ -46,17 +42,17 @@ def main():
     
     # ===== 1) LOGGING KONFIGURIEREN =====
     configure_logging()
-
     logger = logging.getLogger(__name__)
     logger.info(f"Wetter-Dashboard Backend v{__version__} startet...")    
 
     # ===== 2) .ENV DATEI LADEN (API-KEYS ETC.) =====
-    load_dotenv()  #J: Lädt die .env Datei im Projektverzeichnis
+    load_dotenv() 
 
     # ===== 3) WEATHER PROVIDER INITIALISIEREN =====
     provider_mode = os.getenv("WEATHER_PROVIDER", "csv").lower()
     api_key = os.getenv("OPENWEATHER_API_KEY")
 
+    # Prüfen ob API gewählt UND ein Key vorhanden ist, sonst Fallback auf CSV
     if provider_mode in ("api", "openweather") and api_key:
         provider = APIWeatherProvider(api_key = api_key)
     else:
