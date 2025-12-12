@@ -1,162 +1,172 @@
 <h1 align="center">🌦️ WetterApp</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/python-3.11%2B-yellow?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-1.0.1-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/status-stable-green?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/license-AGPL--3.0-red?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>
 
+<p align="center"><img src="https://img.shields.io/badge/python-3.9%2B-yellow? style=for-the-badge&logo=python&logoColor=white" /></p>
+
+<h2 align="center">Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"</h1>
+
+<p align="center">
+  <img src="docs/WetterApp_Screenshot-v1_0_1.png" alt="WetterApp Demo" width="700"/>
+</p>
+
+## 📋 Überblick
+
+Die WetterApp ist eine Web-Anwendung, die Wetterdaten visuell ansprechend darstellt:
+
+- **Interaktive Karte** zeigt die aktuelle Stadt mit Temperatur-Pin (`Folium`)
+- **Echtzeit-Updates** über WebSockets (``Socket.IO``)
+- **Flexible Datenquellen**: CSV-Dateien oder externe APIs (z. B. OpenWeather)
+- **Responsives Design** über ``Bootstrap``
+- **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
+
 ---
 
-### Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"
+## ✨ Features
 
----
+### Frontend
 
-# 📌 Projektübersicht
+- 🗺️ **Live-Karte**:  Zeigt gewählte Stadt mit Temperatur-Marker
+- 📊 **Wetter-Widgets**: Temperatur, Luftfeuchtigkeit, Windgeschwindigkeit, Sonnenauf-/-untergang
+- 🔄 **WebSocket-Updates**:  Kein Seiten-Neuladen nötig
+- 🎨 **Modernes UI**: Bootstrap, responsives Design
 
-Das WetterApp-Backend stellt eine modulare und erweiterbare Architektur bereit,  
-mit der Wetterdaten über mehrere Provider (CSV, API) verarbeitet und an eine Web- oder CLI-Oberfläche übergeben werden können.
+### Backend
 
-Version `v1.0.0` bildet den **ersten stabilen Release**, der eine konsistente Projektstruktur, sauberes Boot-Verhalten und robuste Datenpfade bereitstellt.
-
----
+- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
+- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
+- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
+- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
 
 ## 🛠️ Installation & Verwendung
+
+### Voraussetzungen
+- Python 3.9+
+- pip
 
 ```bash
 # Repository klonen
 git clone https://github.com/julwilke/WetterApp.git
+```
 
+```bash
 # Virtuelle Umgebung erstellen
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
 
+# Windows
+venv\Scripts\activate
+# macOS/Linux
+source venv/bin/activate
+```
+
+```bash
 # Dependencies installieren
 pip install -r requirements.txt
+```
 
-# API-Key setzen in .env (neu erstellen oder Umbennenung von .env.example)
-OPENWEATHER_API_KEY = dein_key
+```bash
+# Umgebungsvariablen konfigurieren
+# Erstelle eine .env (oder bennene .env.example um) mit folgendem Inhalt:
 
+# Welcher Provider? ('api' oder 'csv') # TODO: API fehlt noch
+WEATHER_PROVIDER = csv
+OPENWEATHER_API_KEY = dein_key_hier
+```
+
+```bash
 # Dashboard starten
 python app.py
 
 (läuft dann unter: http://127.0.0.1:5000)
+```
 
+### Alternative: CLI-Version mit API der WetterApp
+
+```bash
 # CLI-Version starten
 python cli/cli.py
-
 ```
 
 # 🏗 Architekturüberblick
 
 ```text
 WetterApp/
-├── app.py                       # Entry Point (Boot-Sequenz)
+├── app.py                              # Einstiegspunkt der Anwendung
+├── .env                                # Konfiguration (nicht im Repo)
+├── requirements.txt                    # Python-Abhängigkeiten
 │
-├── backend/                     # Backend-Logik (Provider, Routing, Map)
-│   ├── dashboard.py             # Haupt-Backend: Routing, Socket, Initialisierung
-│   ├── csv_weather_provider.py  # CSV-Provider (Test-/Fallback-Daten)
-│   ├── generate_map.py          # Dynamische Folium-Map-Erzeugung
-│   └── __init__.py
+├── backend/
+│   ├── dashboard.py                    # Flask + Socket.IO Backend
+│   ├── logging_config.py               # Zentrale Logging-Konfiguration
+│   │
+│   ├── provider/
+│   │   ├── csv_weather_provider.py     # CSV-Datenquelle
+│   │   └── api_weather_provider. py     # API-Gerüst (OpenWeather)
+│   │
+│   └── services/
+│       ├── data_normalizer.py          # Daten-Normalisierung
+│       └── generate_map. py             # Folium-Karten-Generator
 │
-├── cli/                         # CLI-Version der App (Alternative zum Web-Dashboard)
-│   ├── cli.py                   # Wetterabfrage per Konsole (API/PLZ)
-│   └── __init__.py
+├── weather_dashboard/
+│   ├── templates/
+│   │   └── index.html                  # Frontend HTML
+│   │
+│   └── static/
+│       ├── styles.css                  # Styling
+│       ├── script.js                   # Frontend-Logik (WebSocket, UI-Updates)
+│       └── map/                        # Generierte Karten (dynamisch)
 │
-├── weather_dashboard/           # Frontend (HTML, CSS, JS)
-│   ├── static/
-│   │   └── map/                 # Dynamisch generierte HTML-Karten
-│   └── templates/               # index.html & UI-Struktur
-│
-├── data/
-│   └── samples/                 # Beispiel-/Fallback-Daten wie weather_sample.csv
-│
-├── docs/                        # Allgemeine Dokumentation & Projektunterlagen
-│
-├── logging/                     # Reserviert für Logging-Konfigurationen
-│
-├── requirements.txt             # Python-Abhängigkeiten
-├── .env.example                 # Beispielkonfiguration (API-Keys, Flags)
-└── LICENSE
+└── data/
+    └── samples/
+        └── weather_sample.csv          # Beispiel-Wetterdaten
 ```
 
-## 📋 Projektbeschreibung
 
-📌 Projektübersicht
+# 🛠️ Technology Stack
 
-Die WetterApp ist ein modular aufgebautes System zur Abfrage, Aufbereitung und Darstellung von Wetterdaten.
-Sie besteht aus:
+### Backend (Python)
 
-- einer CLI-Version zur Wetterabfrage über die Konsole
-- einem Backend auf Basis von Flask & Socket.IO
-- einem CSV-Provider als Fallback-/Beispiel-Datenquelle
-- einem Map-Generator, der dynamisch Folium-Karten erzeugt
-- einem Web-Dashboard, das Nutzerinteraktionen live verarbeitet
+| Package | Version | Verwendung |
+|---------|---------|------------|
+| **Flask** | 3.1.2 | Web-Framework für HTTP-Routen und Template-Rendering |
+| **Flask-SocketIO** | 5.5.1 | WebSocket-Unterstützung für Echtzeit-Updates |
+| **Pandas** | 2.3.3 | CSV-Datenverarbeitung und Filterung |
+| **Folium** | 0.20.0 | Generierung interaktiver Leaflet-Karten |
+| **Geopy** | 2.4.1 | Geocoding (Stadtname → GPS-Koordinaten) |
+| **python-dotenv** | 1.2.1 | Laden von Umgebungsvariablen aus `.env` |
+| **requests** | 2.32.5 | HTTP-Client für API-Calls (API-Provider vorbereitet) |
 
-Die Architektur ist noch erweiterbar und geplant ist zukünftig:
+### Frontend
 
-- zusätzliche Wetter-APIs
-- Persistenzschichten
-- Logging
-- KI-gestützte Wetteranalysen
+| Technologie | Version | Verwendung |
+|-------------|---------|------------|
+| **HTML5** | - | Markup und Struktur |
+| **CSS3** | - | Styling und Layout |
+| **JavaScript (ES6+)** | - | Client-seitige Logik und DOM-Manipulation |
+| **Bootstrap** | 5.3 | Responsive UI-Framework (Grid, Components) |
+| **Socket.IO Client** | 4.5 | WebSocket-Kommunikation mit Backend |
+| **Leaflet** | 1.9 (via Folium) | Interaktive Kartenvisualisierung |
 
-## Version
+### Entwicklung & Tools
 
-- aktuelle Version: `1.0.0`
+- **Python** 3.9+
+- **pip** für Dependency-Management
+- **Virtual Environment** (venv) für isolierte Umgebung
 
-## 🎯 Projektziele
-
-- **Phase 1**:
-  - ✅ CLI-Version zur Wetterabfrage per API (Postleitzahl → aktuelle Wetterdaten) in der Konsole 
-    - --> MVP (Minimum Viable Product)
-  - ✅ Grundlegende WebApp entwickeln
-  - ✅ Wetterdaten aus CSV (Als Test/Fallback)
-  - ✅ Live-Updates im Dashboard
-  - ✅ Kartenerstellung passend zur Wetterabfrage
-  - ❌ CSV-Daten durch API-Live-Abfrage erweitern
-  - ❌ Abgabefertige und bewertbare Lösung fertigstellen
-
-- **Phase 2**:
-  - ❌ Erweiterte Wetteranalysen und Datenvisualisierung, weitere Funktionen bestimmen und einbinden
-  - ❌ Persistenz ausgewählter Daten (CSV Cache, SQLite Datenbank)
-  - ❌ Logging, Debugging, Test-Funktionen einbauen
-
-- **Phase 3**: (Optional)
-  - ❌ Integration von KI-Funktionen 
-    - eigene Vorhersagen, Mustererkennung, Anomalien (z.B. "ungewöhnlich warmer Dezember")
-  - ❌ Trendanalyse
-  - ❌ Mustererkennung
-  - ❌ Umsetzung eigener Vorhersagemodelle
-
-- **Phase 4**: Finalisierung
-  - ❌ Code-Refactoring / Hardening
-  - ❌ Finalisieren der Konfiguration und Dokumentation
-    - /docs
-    - env.example
-    - config.py's
-    - README.MD
-    - requirements.txt
-
-## ⚙️ Technologie-Stack
-
-- Python 3.11+
-- Flask – Webserver & Routing
-- Flask-SocketIO – Live-Datenübertragung
-- Folium – Generierung interaktiver Karten
-- Pandas – CSV-Verarbeitung
-- geopy (Nominatim) – Geocoding für Städte
-- Requests – API-Abfragen
-- dotenv – Laden von API-Keys aus .env
+----
 
 ## 👥 Team
+
+### PKI- Projektgruppe B1-3
 
 - Adham
 - Tugba
 - Nick-Andre
 - Julian
-
-## 📝 Notizen
 
 ## 📄 License
 
@@ -165,4 +175,4 @@ AGPLv3 — see LICENSE file for full terms.
 
 ---
 
-**Letzte Aktualisierung**: 07.12.2025 by Julian
+**Letzte Aktualisierung**: 12.12.2025 by Julian
