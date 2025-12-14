@@ -88,7 +88,7 @@ python app.py
 
 ```bash
 # CLI-Version starten
-python cli/cli.py
+python weather_cli.py 
 ```
 
 # 🏗 Architekturüberblick

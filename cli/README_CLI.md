@@ -28,7 +28,8 @@ Inhalt
 
 Kurzübersicht
 - Programm: cli/cli.py
-- Sprache: Python 3.8+
+- Entry-Point: 'python weather_cli.py' (oder: 'python -m cli.cli)
+- Sprache: Python 3.9+ # J: Habe es mit 3.9 getestet alles
 - Zweck: Wetterdaten anzeigen & optional loggen (CSV / OpenWeather)
 - Erweiterte Felder: date, city, temp, description, precipitation, wind, humidity, pressure, clouds
 
@@ -60,23 +61,23 @@ Schnellstart (PowerShell & Bash Beispiele)
 CSV lesen und anzeigen:
 - PowerShell:
   $env:OPENWEATHER_API_KEY = "..."  # nur falls du später API brauchst
-  python -m cli.cli --file ./cli\sample.csv
+  python weather_cli.py --file ./cli\sample.csv # J: angepasst
 
 - Bash:
-  python -m cli.cli --file cli/sample.csv
+  python weather_cli.py --file cli/sample.csv # J: angepasst
 
 CSV per stdin (pipe):
 - PowerShell:
-  Get-Content ./cli\sample.csv -Raw | python -m cli.cli
+  Get-Content ./cli\sample.csv -Raw | python weather_cli.py # J: angepasst
 - Bash:
-  cat cli/sample.csv | python -m cli.cli
+  cat cli/sample.csv | python weather_cli.py # J: angepasst
 
 OpenWeather (API‑Modus):
 - Setze Key als Umgebungsvariable (empfohlen):
   $env:OPENWEATHER_API_KEY = "DEIN_ECHTER_KEY"
-  python -m cli.cli --ow-city "Berlin"
+  python weather_cli.py --ow-city "Berlin" # J: angepasst
 - Oder Key direkt:
-  python -m cli.cli --ow-city "Berlin" --ow-key DEIN_KEY
+  python weather_cli.py --ow-city "Berlin" --ow-key DEIN_KEY # J: angepasst
 
 Loggen in CSV:
 - python -m cli.cli --file cli/.\sample.csv --log .\logged.csv
