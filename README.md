@@ -88,7 +88,13 @@ python app.py
 
 ```bash
 # CLI-Version starten
-python weather_cli.py 
+
+#Für sample Daten
+python -m cli.cli --ow-city Berlin 
+
+# Für API-Abfrage
+$env:OPENWEATHER_API_KEY="DEIN_KEY_HIER"   
+python -m cli.cli --ow-city Berlin
 ```
 
 # 🏗 Architekturüberblick
