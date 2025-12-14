@@ -1,3 +1,5 @@
+# 1.0.1
+
 # Normalizer für Wetterdaten. Konvertiert rohe Daten in das vom Dashboard erwartete Format. 
 # Unterstützt verschiedene Eingabeformate (CSV, API, etc.)
 # Fehlt ein Wert -> Definierte Default-Werte verwenden.
