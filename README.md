@@ -6,8 +6,6 @@
   <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>
 
-<p align="center"><img src="https://img.shields.io/badge/python-3.9%2B-yellow? style=for-the-badge&logo=python&logoColor=white" /></p>
-
 <h2 align="center">Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"</h1>
 
 <p align="center">
