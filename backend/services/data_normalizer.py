@@ -1,9 +1,13 @@
+# 1.0.1
+
 # Normalizer für Wetterdaten. Konvertiert rohe Daten in das vom Dashboard erwartete Format. 
 # Unterstützt verschiedene Eingabeformate (CSV, API, etc.)
 # Fehlt ein Wert -> Definierte Default-Werte verwenden.
 # Alle Rückgaben sind in nativen Python-Datentypen (keine numpy/pandas Typen) & JSON-serialisierbar.
 # Ziel: Einheitliche Datenstruktur für das Dashboard.
 # Annahme: Eingabedaten sind dict-ähnlich (z.B. aus CSV-Zeilen oder JSON-Antworten) mit unterschiedlichen Schlüsselbenennungen und Datentypen.
+
+# ACHTUNG: Der normalizer versteht nur "flache" also zeilen-dicts, so wie aus der csv gelesen wird, daher wird im API Provider das JSON auch erstmal in ein flat_raw umgebaut
 
 import numbers
 
@@ -13,7 +17,7 @@ def _to_int(value, default=None):
     if value is None:
         return default
     
-    # numpy, pandas, python numeric
+    # Numeric-Typen (int, float, numpy, pandas,...)
     if isinstance(value, numbers.Number):
         try:
             return int(value)
@@ -37,11 +41,13 @@ def _to_float(value, default=None):
 
     if value is None:
         return default
+    
     if isinstance(value, numbers.Number):
         try:
             return float(value)
         except (TypeError, ValueError):
             return default
+        
     if isinstance(value, str):
         value = value.strip()
         if value == "":
@@ -155,8 +161,8 @@ def normalize_weather_data(raw: dict) -> dict:
     snow1h = _to_float(raw.get("snow1h") or raw.get("snow_1h"), default=0.0)
     snow3h = _to_float(raw.get("snow3h") or raw.get("snow_3h"), default=0.0)
 
-    # Rückgabe des normalisierten Dictionaries
-    return {
+    # Dictionairy Final zusammenstellen
+    normalized_data = {
         "city": city,
         "currentTemperature": temp,
         "feelsLike": feels_like,
@@ -188,3 +194,7 @@ def normalize_weather_data(raw: dict) -> dict:
         "pressureTrend": pressure_trend,
         "fog": fog,
     }
+
+    # Rückgabe des normalisierten Datensatzes
+    return normalized_data        
+    
