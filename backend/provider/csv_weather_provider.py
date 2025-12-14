@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 
-
 # ===== KLASSE ERSTELLEN =====
 class CSVWeatherProvider:
     """ Liest Wetterdaten aus einer CSV-Datei, normalisiert sie und stellt sie bereit. """
@@ -48,7 +47,8 @@ class CSVWeatherProvider:
 
         #1) CSV laden (J: Try Except hinzugefügt falls Pfad nicht gefunden wurde)
         try:
-            df = pd.read_csv(self.csv_path)
+            df = pd.read_csv(self.csv_path) # wird bei jedem Request geladen, aufgrund kleiner CSV/kleiner Last aber erstmal so gelassen
+            
         except Exception as e:
             logger.error(f"CSV konnte nicht geladen werden: {e}")
             return None

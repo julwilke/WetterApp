@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 
 from backend.dashboard import WeatherDashboard # J: optimiert für die Lesbarkeit 
 from backend.logging_config import configure_logging  #J: Logging Konfiguration importieren
+
 from backend.provider.csv_weather_provider import CSVWeatherProvider
 from backend.provider.api_weather_provider import APIWeatherProvider
 

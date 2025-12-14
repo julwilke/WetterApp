@@ -81,17 +81,24 @@ class WeatherDashboard:
     def define_routes(self):
         """Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird."""
        
-       # Route für den API-Status (Dummy) später evtl. erweitern
+       # Route für den API-Status / sichtbar im Dashboard oben rechts. unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
         @self.app.route('/status')
         def status():
-            """
-            Einfache Status-Route für das API-Status-Menü im Frontend.
-            Aktuell Dummy: keine echten API-Checks.
-            """
+            provider_name = self.provider.__class__.__name__
+            provider_key = provider_name.lower().replace("weatherprovider", "")
+
             return jsonify({
-                "apis": {},
-                "lastPolled": datetime.utcnow().isoformat() + "Z"
+                "apis": {
+                    provider_key: {
+                        "status": "ok",
+                        "lastPolled": (
+                            self.last_polled.isoformat() + "Z"
+                            if self.last_polled else None
+                        )
+                    }
+                }
             })
+
 
         # Route für die Hauptseite     
         @self.app.route('/')
@@ -149,6 +156,14 @@ class WeatherDashboard:
                 "lon": lon,
                 "lastPolled": datetime.utcnow().isoformat() + "Z",
             }
+
+            # Damit History im Frontend nicht crasht, aber zumindest leer übergeben wird. Kann erweitert werden
+            # Frontend erwartet '_history' - Werte im response
+            response.update({
+                "currentTemperature_history": [],
+                "humidity_history": [],
+                "pressure_history": [],
+            })
             
             # Wetterdaten hinzufügen ins JSON dict
             for key, value in self.weather_data.items():
@@ -301,6 +316,13 @@ class WeatherDashboard:
         logger.info(f"Initialisiere Dashboard mit Stadt '{city_clean}'.")
 
         data = self.provider.get_weather_for_city(city_clean)
+
+        if data is None:
+            logger.error(
+                f"Initialisierung fehlgeschlagen: "
+                f"Provider {type(self.provider).__name__} liefert keine Daten."
+            )
+            return
 
         #Falls keine Daten gefunden wurden, auf Default zurückfallen
         if data is None:

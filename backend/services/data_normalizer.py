@@ -5,6 +5,8 @@
 # Ziel: Einheitliche Datenstruktur für das Dashboard.
 # Annahme: Eingabedaten sind dict-ähnlich (z.B. aus CSV-Zeilen oder JSON-Antworten) mit unterschiedlichen Schlüsselbenennungen und Datentypen.
 
+# ACHTUNG: Der normalizer versteht nur "flache" also zeilen-dicts, so wie aus der csv gelesen wird, daher wird im API Provider das JSON auch erstmal in ein flat_raw umgebaut
+
 import numbers
 
 def _to_int(value, default=None):
