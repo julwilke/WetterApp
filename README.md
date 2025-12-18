@@ -6,6 +6,8 @@
   <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>
 
+<p align="center"><img src="https://img.shields.io/badge/python-3.9%2B-yellow? style=for-the-badge&logo=python&logoColor=white" /></p>
+
 <h2 align="center">Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"</h1>
 
 <p align="center">
@@ -22,7 +24,12 @@ Die WetterApp ist eine Web-Anwendung, die Wetterdaten visuell ansprechend darste
 - **Responsives Design** über ``Bootstrap``
 - **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
 
----
+### Backend
+
+- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
+- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
+- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
+- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
 
 ## ✨ Features
 
