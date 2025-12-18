@@ -24,7 +24,12 @@ Die WetterApp ist eine Web-Anwendung, die Wetterdaten visuell ansprechend darste
 - **Responsives Design** über ``Bootstrap``
 - **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
 
----
+### Backend
+
+- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
+- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
+- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
+- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
 
 ## ✨ Features
 
