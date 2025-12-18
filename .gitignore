@@ -3,11 +3,20 @@
 #================================================#
 
 #persönliche venvs
-venv/
-.env
+env/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# ===== Requirements-Testdateien =====
+requirements_full.txt
+test_env/
 
 #map.html Dateien
 weather_dashboard/static/map/
+map.html
 
 #prüfen
 data/cache/* 
@@ -16,9 +25,12 @@ data/db/*
 #pdoc Dokumentation
 /docs_generated
 
-#========================================#
-#=========== GitHub/ChatGPT ============ #
-#========================================#
+#weather_cli logged.csv
+logged.csv
+
+#==========================================================#
+#=========== GitHub/Copilot Claude-Sonnet 4.5 ============ #
+#==========================================================#
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

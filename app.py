@@ -1,39 +1,39 @@
 ##############################################
-#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.0  #
+#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.1  #
 ##############################################
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 #Docstring mit Minimalbeschreibung
 """
 WetterApp - Backend Entry Point
 --------------------------------
 Initialisiert:
-- Logging
-- Environment Variablen
-- Dashboard Backend
-- Optionale CLI Argumente
+- Logging konfiguration
+- Environment Variablen laden aus .env Datei
+- Weather-Provider aus .env auswählen (CSV oder API/OpenWeather)
+- Dashboard Backend starten
 """
 
 # =============== IMPORTS ====================
+             
+import logging
+import os
 
-# TODO: Uncomment and use these imports when implementing:
-#   - Logging system events
-#   - Loading .env files with API keys
-#   - Command-line argument parsing
-#from logging import dieLoggingFunktion     #J: Für logging "der Dinge die passieren"
-#from dotenv import load_dotenv             #J: Für das einbinden der eigenen, persönlichen .venvs inkl. API-Keys
-#import argparse                            #J: Für Konsolenausgabe
-from backend import dashboard
+from dotenv import load_dotenv
+# Im Rest des Programms dann nur noch logger = logging.getLogger(__name__) nutzen und dann...
+# z.B. logger.info("Nachricht"), logger.warning("Warnung"), logger.error("Fehler")
+
+from backend.dashboard import WeatherDashboard # J: optimiert für die Lesbarkeit 
+from backend.logging_config import configure_logging  #J: Logging Konfiguration importieren
+
+from backend.provider.csv_weather_provider import CSVWeatherProvider
+from backend.provider.api_weather_provider import APIWeatherProvider
+
+
 
 # ============================================
-#  1) Konsolen Argumente lesen
-# ============================================
-
-#def parse_args(): ...
-
-# ============================================
-#  2) HAUPT-FUNKTION - main-Boot-Sequenz
+#  1) HAUPT-FUNKTION - main-Boot-Sequenz
 # ============================================
 def main():
     """
@@ -41,17 +41,30 @@ def main():
     Erstellt eine Instanz von WeatherDashboard und startet den Server.
     """
     
-    print(f"Wetter-Dashboard Backend v{__version__} startet...")
+    # ===== 1) LOGGING KONFIGURIEREN =====
+    configure_logging()
+    logger = logging.getLogger(__name__)
+    logger.info(f"Wetter-Dashboard Backend v{__version__} startet...")    
 
-    # TODO: Comprehensive error handling for fatal backend errors will be implemented in a future release.
-    app = dashboard.WeatherDashboard()   # Backend initialisieren
-    app.run(city="Berlin")               # Server + Socket starten
+    # ===== 2) .ENV DATEI LADEN (API-KEYS ETC.) =====
+    load_dotenv() 
 
-    
+    # ===== 3) WEATHER PROVIDER INITIALISIEREN =====
+    provider_mode = os.getenv("WEATHER_PROVIDER", "csv").lower()
+    api_key = os.getenv("OPENWEATHER_API_KEY")
 
+    # Prüfen ob API gewählt UND ein Key vorhanden ist, sonst Fallback auf CSV
+    if provider_mode in ("api", "openweather") and api_key:
+        provider = APIWeatherProvider(api_key = api_key)
+    else:
+        provider = CSVWeatherProvider("weather_sample.csv")
+
+    # ===== 4) DASHBOARD BACKEND INITIALISIEREN UND STARTEN =====
+    app = WeatherDashboard(provider = provider)             # Initialsieren
+    app.run(city="Berlin")                                  # Server starten             
 
 # ============================================
-#  3) SCRIPT START (Entry-Point)
+#   ===== SCRIPT START (Entry-Point) =====
 # ============================================
 if __name__ == "__main__":
     main()  # Hauptfunktion ausführen
