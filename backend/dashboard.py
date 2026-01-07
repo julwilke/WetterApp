@@ -15,7 +15,7 @@ Aufgaben:
 
 # =============== IMPORTS ====================
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask, render_template, jsonify
 from flask_socketio import SocketIO
@@ -65,6 +65,14 @@ class WeatherDashboard:
         self.weather_data = None            # Wetterdaten für die Stadt als dict
         self.last_polled = None             # Zeitpunkt der letzten erfolgreichen Abfrage
         
+        #API Abfrage und ggf. Error mit Zeitablauf für alte Werte
+        self.refresh_ttl = timedelta(seconds=600)   # 600s lang gelten Werte als Aktuell
+        self.last_error = None
+        self.last_error_at = None
+
+        #Geodaten für Karte cachen, damit Nominatim nicht unnötig oft die Koordinaten wandelt und die Stadt abholt für die Karte
+        self._geo_cache = {}
+
         #Geolocator Client bauen, später über Nominatim Städte zu Koordinaten auflösen
         self.geolocator = Nominatim(user_agent="weather_dashboard")
 
@@ -127,34 +135,73 @@ class WeatherDashboard:
 
                 return jsonify(response), 400 # 400 = Bad Request                  
                 
+            now = datetime.utcnow() #aktuelle Zeit für den Ablauf der Gültigkeit der Werte setzen
             
-            # Falls noch keine Daten im Speicher sind, neu laden
-            if self.weather_data is None:
-                logger.info(f"/weather: Keine Daten im Speicher, lade neu für '{self.city}'.'") 
 
-                # Neu laden          
-                data = self.provider.get_weather_for_city(self.city)
+            # ===== 2) Refresh der Daten (TTL) Entscheidung =====
 
-                if data is None:
-                    logger.warning(f"/weather: Keine Daten für Stadt '{self.city}' gefunden.")
+            # Standardmäßig kein Refresh nötig
+            refresh_noetig = False
 
-                    response = {
-                        "city": self.city
-                    }
+            # Refresh-Variable TRUE setzen, wenn 
+            # - noch keine Daten vorhanden
+            # - noch nicht abgefragt wurde
+            # - die letzte Abfrage älter als die erlabute TTL-Zeit ist
+            if self.weather_data is None or self.last_polled is None or (now - self.last_polled) > self.refresh_ttl:
+                refresh_noetig = True
+           
+           # Wenn Refresh nötig ist, dann das Wetter abrufen
+            if refresh_noetig:
+                logger.info(
+                    f"/weather: Refresh nötig (city='{self.city}', "
+                    f"last_polled={self.last_polled}, ttl={self.refresh_ttl})."
+                )
+
+                try:
+                    data = self.provider.get_weather_for_city(self.city)
+
+                    #Falls data None ist... Fallback
+                    if data is None:
+                         logger.warning(
+                            f"/weather: Provider lieferte keine Daten für '{self.city}'"
+                        )
                     
-                    return jsonify(response), 404   # 404 = Not Found
-                           
-                # Erfolgreich Daten geladen
-                self.weather_data = data
-                self.last_polled = datetime.utcnow()
+                    if self.weather_data is not None:
+                        data = self.weather_data
+                    else:
+                        self.last_error = "Provider hat 'None' zurückgegeben"
+                        self.last_error_at = ""
 
-            # Koordinaten zur aktuellen Stadt holen - Karte noch nicht generieren hier
+                    # Falls alles geklappt hat setzen...
+                    self.weather_data = data
+                    self.last_polled = now
+                    self.last_error = None
+                    self.last_error_at = None
+
+                # Fangen der ValueError Exception
+                except Exception as e:
+                    self.last_error = str(e)
+                    self.last_error_at = now
+                    
+                    logger.error(f"/weather: Fehler beim Abrufen für '{self.city}': {e}")
+
+                    return jsonify({
+                        "city": self.city,
+                        "error": "Wetterdaten-Abruf ist fehlgeschlagen"
+                    }), 502 #502 = Bad Gateway Fehler
+
+
+
+            # ===== 3) KOORDINATEN HOLEN FÜR MAP (noch keine Generierung) =====
             lat, lon = self.fetch_coordinates(self.city)
 
+
+
+            # ===== 4) RESPONSE BAUEN =====
             response = {                
                 "lat": lat,
                 "lon": lon,
-                "lastPolled": datetime.utcnow().isoformat() + "Z",
+                "lastPolled": (self.last_polled.isoformat() + "Z") if self.last_polled else None, # Zeitstempel der letzten ERFOLGREICHEN Abfrage
             }
 
             # Damit History im Frontend nicht crasht, aber zumindest leer übergeben wird. Kann erweitert werden
