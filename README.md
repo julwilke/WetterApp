@@ -16,7 +16,14 @@
 
 ## 📋 Überblick
 
-Die WetterApp ist eine Web-Anwendung, die Wetterdaten visuell ansprechend darstellt:
+Die WetterApp ist eine Web-Anwendung zur Visualisierung und Analyse von Wetterdaten für eine ausgewählte Stadt.
+
+**Kernidee**:
+
+- Abruf von Wetterdaten aus verschiedenen Quellen (bislang API "OpenWeatherMap" und .csv)
+- Darstellung im Browser mit Karte und Live-Updates
+
+**Highlights**:
 
 - **Interaktive Karte** zeigt die aktuelle Stadt mit Temperatur-Pin (`Folium`)
 - **Echtzeit-Updates** über WebSockets (``Socket.IO``)
@@ -24,35 +31,31 @@ Die WetterApp ist eine Web-Anwendung, die Wetterdaten visuell ansprechend darste
 - **Responsives Design** über ``Bootstrap``
 - **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
 
-### Backend
-
-- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
-- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
-- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
-- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
-
 ## ✨ Features
 
 ### Frontend
 
 - 🗺️ **Live-Karte**:  Zeigt gewählte Stadt mit Temperatur-Marker
-- 📊 **Wetter-Widgets**: Temperatur, Luftfeuchtigkeit, Windgeschwindigkeit, Sonnenauf-/-untergang
+- 📊 **Wetter-Widgets**: Temperatur, Luftfeuchtigkeit, Windgeschwindigkeit, Sonnenauf-/-untergang, etc.
 - 🔄 **WebSocket-Updates**:  Kein Seiten-Neuladen nötig
 - 🎨 **Modernes UI**: Bootstrap, responsives Design
 
 ### Backend
 
-- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
-- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
-- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
-- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
+- 🔌 **Provider-Architektur** (CSV / OpenWeather API)
+- 🧩 **Data Normalizer** für ein einheitliches Datenformat
+- 🛡️ **Fehlerbehandlung & Fallbacks** bei ungültigen Eingaben oder API-Problemen
+- 🧾 **Zentrales Logging** - konfigurierbar über .env
+- 🔄 **Saubere Trennung** von Stadtwechsel (WebSocket) und Wetterabfrage (HTTP)
 
 ## 🛠️ Installation & Verwendung
 
 ### Voraussetzungen
+
 - Python 3.9+
 - pip
 
+### Code
 ```bash
 # Repository klonen
 git clone https://github.com/julwilke/WetterApp.git
@@ -64,6 +67,7 @@ python -m venv venv
 
 # Windows
 venv\Scripts\activate
+
 # macOS/Linux
 source venv/bin/activate
 ```
@@ -73,15 +77,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Konfiguration
+
 ```bash
 # Umgebungsvariablen konfigurieren
 # Erstelle eine .env (oder bennene .env.example um) mit folgendem Inhalt:
 
-# Welcher Provider? ('api' oder 'csv') # TODO: API fehlt noch
+# Logging-Level (INFO, DEBUG, ...)
+LOG_LEVEL = INFO 
+
+# Welcher Provider? ('api' (OpenWeatherMap) oder 'csv')
 WEATHER_PROVIDER = csv
 OPENWEATHER_API_KEY = dein_key_hier
 ```
 
+### Starten
 ```bash
 # Dashboard starten
 python app.py
@@ -89,7 +99,7 @@ python app.py
 (läuft dann unter: http://127.0.0.1:5000)
 ```
 
-### Alternative: CLI-Version mit API der WetterApp
+### Alternative/Debug: CLI-Version mit API der WetterApp
 
 ```bash
 # CLI-Version starten
@@ -116,11 +126,11 @@ WetterApp/
 │   │
 │   ├── provider/
 │   │   ├── csv_weather_provider.py     # CSV-Datenquelle
-│   │   └── api_weather_provider. py     # API-Gerüst (OpenWeather)
+│   │   └── api_weather_provider. py    # API-Gerüst (OpenWeather)
 │   │
 │   └── services/
 │       ├── data_normalizer.py          # Daten-Normalisierung
-│       └── generate_map. py             # Folium-Karten-Generator
+│       └── generate_map. py            # Folium-Karten-Generator
 │
 ├── weather_dashboard/
 │   ├── templates/
@@ -139,30 +149,26 @@ WetterApp/
 
 # 🛠️ Technology Stack
 
-### Backend (Python)
+## Backend (Python)
 
-| Package | Version | Verwendung |
-|---------|---------|------------|
-| **Flask** | 3.1.2 | Web-Framework für HTTP-Routen und Template-Rendering |
-| **Flask-SocketIO** | 5.5.1 | WebSocket-Unterstützung für Echtzeit-Updates |
-| **Pandas** | 2.3.3 | CSV-Datenverarbeitung und Filterung |
-| **Folium** | 0.20.0 | Generierung interaktiver Leaflet-Karten |
-| **Geopy** | 2.4.1 | Geocoding (Stadtname → GPS-Koordinaten) |
-| **python-dotenv** | 1.2.1 | Laden von Umgebungsvariablen aus `.env` |
-| **requests** | 2.32.5 | HTTP-Client für API-Calls (API-Provider vorbereitet) |
+- **Flask** - Web-Framework für HTTP-Routen und Template-Rendering
+- **Flask-SocketIO** - WebSocket-Unterstützung für Echtzeit-Updates
+- **Pandas** - CSV-Datenverarbeitung und Filterung
+- **Folium** - Generierung interaktiver Leaflet-Karten
+- **Geopy** - Geocoding (Stadtname → GPS-Koordinaten)
+- **python-dotenv** - Laden von Umgebungsvariablen aus `.env`
+- **requests** - HTTP-Client für API-Calls (API-Provider vorbereitet)
 
-### Frontend
+## Frontend
 
-| Technologie | Version | Verwendung |
-|-------------|---------|------------|
-| **HTML5** | - | Markup und Struktur |
-| **CSS3** | - | Styling und Layout |
-| **JavaScript (ES6+)** | - | Client-seitige Logik und DOM-Manipulation |
-| **Bootstrap** | 5.3 | Responsive UI-Framework (Grid, Components) |
-| **Socket.IO Client** | 4.5 | WebSocket-Kommunikation mit Backend |
-| **Leaflet** | 1.9 (via Folium) | Interaktive Kartenvisualisierung |
+- **HTML5** - Markup und Struktur
+- **CSS3** - Styling und Layout
+- **JavaScript (ES6+)** - Client-seitige Logik und DOM-Manipulation
+- **Bootstrap** - Responsive UI-Framework (Grid, Components)
+- **Socket.IO Client** - WebSocket-Kommunikation mit Backend
+- **Leaflet** - Interaktive Kartenvisualisierung
 
-### Entwicklung & Tools
+## Entwicklung & Tools
 
 - **Python** 3.9+
 - **pip** für Dependency-Management
