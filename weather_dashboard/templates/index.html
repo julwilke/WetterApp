@@ -63,7 +63,7 @@
                 <div class="container-fluid">
                     <!-- Page heading + small action button on the right -->
                     <div class="d-sm-flex justify-content-between align-items-center mb-4">
-                        <h3 class="mb-0" id="cityDisplay">--</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="#"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Generate Report</a>
+                        <h3 class="mb-0" id="cityDisplay">--</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="#"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Wetterbericht herunterladen</a>
                     </div>
 
                     <div id="dashboard" class="row">
@@ -700,7 +700,9 @@
                 const res = await fetch('/status');
                 // no global apiStatus; create dynamic per-api rows in #apiRows
                 const apiRows = document.getElementById('apiRows');
-                const API_ICON_MAP = { 'openweather': '/static/images/icon.svg', 'meteor': '/static/images/logo_white_cropped.png' };
+
+                // Icons für den Poll-Status
+                const API_ICON_MAP = {'openweather': '/static/images/icon.svg', 'csv': '/static/images/csv.png'};
                 if (res.ok) {
                     // read optional JSON body
                     let body = null;

@@ -1,8 +1,8 @@
 ##############################################
-#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.1  #
+#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.2  #
 ##############################################
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 #Docstring mit Minimalbeschreibung
 """
@@ -21,15 +21,12 @@ import logging
 import os
 
 from dotenv import load_dotenv
-# Im Rest des Programms dann nur noch logger = logging.getLogger(__name__) nutzen und dann...
-# z.B. logger.info("Nachricht"), logger.warning("Warnung"), logger.error("Fehler")
 
-from backend.dashboard import WeatherDashboard # J: optimiert für die Lesbarkeit 
-from backend.logging_config import configure_logging  #J: Logging Konfiguration importieren
+from backend.dashboard import WeatherDashboard 
+from backend.logging_config import configure_logging
 
 from backend.provider.csv_weather_provider import CSVWeatherProvider
 from backend.provider.api_weather_provider import APIWeatherProvider
-
 
 
 # ============================================
@@ -41,13 +38,22 @@ def main():
     Erstellt eine Instanz von WeatherDashboard und startet den Server.
     """
     
-    # ===== 1) LOGGING KONFIGURIEREN =====
-    configure_logging()
-    logger = logging.getLogger(__name__)
-    logger.info(f"Wetter-Dashboard Backend v{__version__} startet...")    
-
-    # ===== 2) .ENV DATEI LADEN (API-KEYS ETC.) =====
+    # ===== 1) .ENV DATEI LADEN (API-KEYS ETC.) =====
     load_dotenv() 
+
+
+
+    # ===== 2) LOGGING STARTEN UND STARTKONTEXT LOGGEN =====
+    configure_logging()
+    
+    logger = logging.getLogger(__name__)
+    logger.info(f"Wetter-Dashboard Backend v{__version__} startet...") 
+
+    # Startkontext loggen
+    logger.info("WEATHER_PROVIDER =%s ", os.getenv("WEATHER_PROVIDER", "not set"))
+    logger.info("LOG_LEVEL = %s", os.getenv("LOG_LEVEL", "INFO"))
+    
+
 
     # ===== 3) WEATHER PROVIDER INITIALISIEREN =====
     provider_mode = os.getenv("WEATHER_PROVIDER", "csv").lower()
@@ -59,12 +65,16 @@ def main():
     else:
         provider = CSVWeatherProvider("weather_sample.csv")
 
+
+
     # ===== 4) DASHBOARD BACKEND INITIALISIEREN UND STARTEN =====
     app = WeatherDashboard(provider = provider)             # Initialsieren
     app.run(city="Berlin")                                  # Server starten             
+
 
 # ============================================
 #   ===== SCRIPT START (Entry-Point) =====
 # ============================================
 if __name__ == "__main__":
     main()  # Hauptfunktion ausführen
+
