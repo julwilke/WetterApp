@@ -1,6 +1,6 @@
-##################################################
-# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.1
-##################################################
+#####################################################
+# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.2  #
+#####################################################
 
 """
 Dieser Provider lädt LIVE-Wetterdaten über eine externe API (OpenWeatherMap).
