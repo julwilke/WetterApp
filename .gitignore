@@ -18,19 +18,18 @@ test_env/
 weather_dashboard/static/map/
 map.html
 
-#prüfen
-data/cache/* 
-data/db/*
-
 #pdoc Dokumentation
 /docs_generated
 
 #weather_cli logged.csv
 logged.csv
 
-#==========================================================#
-#=========== GitHub/Copilot Claude-Sonnet 4.5 ============ #
-#==========================================================#
+#VS-Code Workspaces
+*.code-workspace
+
+#===========================================================================#
+#=========== KI-Generiert per GitHub/Copilot Claude-Sonnet 4.5 ============ #
+#===========================================================================#
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

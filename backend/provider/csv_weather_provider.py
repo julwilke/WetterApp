@@ -39,7 +39,7 @@ class CSVWeatherProvider:
         if not os.path.exists(self.csv_path):   
             logger.error(f"CSV-Datei nicht gefunden unter: {self.csv_path}")
         else:
-            logger.info(f"CSV-Date geladen aus {self.csv_path}")
+            logger.info(f"CSV-Daten geladen aus {self.csv_path}")
 
 
     def get_weather_for_city(self, city: str):

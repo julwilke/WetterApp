@@ -1,13 +1,12 @@
-# 1.0.1
+##############################################
+#          DATA NORMALIZER - 1.0.2           #
+##############################################
 
-# Normalizer für Wetterdaten. Konvertiert rohe Daten in das vom Dashboard erwartete Format. 
-# Unterstützt verschiedene Eingabeformate (CSV, API, etc.)
+# Normalizer für Wetterdaten. Konvertiert rohe Daten in das vom Dashboard erwartete (immer gleiche) Format. 
 # Fehlt ein Wert -> Definierte Default-Werte verwenden.
 # Alle Rückgaben sind in nativen Python-Datentypen (keine numpy/pandas Typen) & JSON-serialisierbar.
-# Ziel: Einheitliche Datenstruktur für das Dashboard.
-# Annahme: Eingabedaten sind dict-ähnlich (z.B. aus CSV-Zeilen oder JSON-Antworten) mit unterschiedlichen Schlüsselbenennungen und Datentypen.
-
-# ACHTUNG: Der normalizer versteht nur "flache" also zeilen-dicts, so wie aus der csv gelesen wird, daher wird im API Provider das JSON auch erstmal in ein flat_raw umgebaut
+# Ziel --> Einheitliche Datenstruktur für das Dashboard.
+# Bedingung: Eingabedaten sind "flache" dicts, also Einzeiler, keine verschachtelten Strukturen (Daher wird z.B. im API Provider das JSON auch erstmal in ein 'flat_raw'-dict umgebaut)
 
 import numbers
 
@@ -195,6 +194,6 @@ def normalize_weather_data(raw: dict) -> dict:
         "fog": fog,
     }
 
-    # Rückgabe des normalisierten Datensatzes
+    # Rückgabe des normalisierten Datensatzes für das Dashboard
     return normalized_data        
     

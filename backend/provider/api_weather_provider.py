@@ -172,15 +172,12 @@ class APIWeatherProvider:
         # ---------------------------------------------
         # 7️⃣ Metadaten ergänzen
         # ---------------------------------------------
-
-        normalized_data["source"] = "openweather"
+        
         normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"
 
-        logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST
+        logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST DEBUG
 
-        logger.info(
-            f"✅ Wetterdaten für '{city_clean}' erfolgreich von API geladen."
-        )
+        logger.info(f"✅ Wetterdaten für '{city_clean}' erfolgreich von API geladen.")
 
         # ---------------------------------------------
         # 8️⃣ Rückgabe
