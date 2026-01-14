@@ -1,3 +1,7 @@
+<!-- ============================= -->
+<!-- index.html MAINPAGE v.1.0.4   -->
+<!-- ============================= -->
+
 <!DOCTYPE html>
 <html>
 
@@ -28,7 +32,18 @@
                 <!-- main menu: list of nav items (each has a .nav-link) -->
                 <ul class="navbar-nav text-light" id="accordionSidebar">
                     <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <li class="nav-item"><a class="nav-link" href="/history"><i class="fas fa-table"></i><span>Verlauf</span></a></li>
+                    <!-- Verlaufsseite als Modal/Overlay-->
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="navHistory">
+                            <i class="fas fa-table"></i><span>Verlauf</span>
+                        </a>
+                        </li>
+
+                        <li class="nav-item">
+                        <a class="nav-link" href="#" id="navForecast">
+                            <i class="fas fa-chart-line"></i><span>Forecast</span>
+                        </a>
+                        </li>
                 </ul>
                 <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
             </div>
@@ -79,21 +94,43 @@
             </div>
             <footer class="sticky-footer">
                 <div class="container my-auto">
-                    <div class="text-center my-auto copyright">Copyright © WetterApp 2025</div>
+                    <div class="text-center my-auto copyright">Copyright © PKI B1-3 WetterApp 2025</div>
                 </div>
             </footer>
         </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
     </div>
+   
+    <!-- ========================= -->
+    <!-- HISTORY OVERLAY / MODAL   -->
+    <!-- ========================= -->
 
-    <!-- History Modal -->
     <div id="historyOverlay" class="history-hidden">
-        <div id="historyModal">
-            <div id="historyHeader">
-                <strong id="historyTitle">Verlauf</strong>
-                <button id="historyClose">✕</button>
-            </div>
+      <div id="historyModal">
+
+        <div id="historyHeader">
+          <strong id="historyTitle">Verlauf</strong>
+          <button id="historyClose" type="button">✕</button>
         </div>
+
+        <div id="historyControls">
+          <label class="history-label">
+            Tage:
+            <input id="historyDays" type="number" min="1" max="14" value="7">
+          </label>
+
+          <button id="historyReload" type="button">Neu laden</button>
+          <span id="historyInfo"></span>
+        </div>
+
+        <div id="weatherPlot"></div>
+
+      </div>
     </div>
+
+
+    <!-- ========================= -->
+    <!-- ===== SKRIPTE =====       -->
+    <!-- ========================= -->
 
     <!-- keep project scripts and the inline dashboard script intact -->
     <script src="/static/js/chart.min.js"></script>
@@ -121,6 +158,8 @@
         // visual icon (see `iconMap`) and a unit (see `unitMap`). The creation
         // loop below will render a tile for every entry here.
         // ------------------------------------------------------------------
+        
+        //...
         const weatherVars = [
             "currentTemperature","feelsLike","map","tempMax","tempMin","sunarc",
             "humidity","pressure","pressureTrend","windSpeed","windGust","windDirection",
@@ -130,6 +169,7 @@
             "pollenCount","fog"
         ];
 
+        // ...
         const blockOrder = [
             "currentTemperature",
             "feelsLike",
@@ -162,6 +202,7 @@
             "fog"
         ];
 
+        // Icons für die entsprechenden Cards
         const iconMap = {
             currentTemperature: 'fa-thermometer-half',
             feelsLike: 'fa-thermometer-half',
@@ -195,7 +236,7 @@
             map: 'fa-chart-area'
         };
 
-        // Human readable labels and units
+        // Labels für die Cards
         const labelMap = {
             currentTemperature: 'Temperatur',
             feelsLike: 'Gefühlt',
@@ -229,6 +270,7 @@
             map: 'Karte'
         };
 
+        // Einheiten für die Werte in den Cards
         const unitMap = {
             currentTemperature: '°C',
             feelsLike: '°C',
@@ -261,7 +303,7 @@
             fog: ''
         };
 
-        // Color series for cards (bunt)
+        // Farben für die Cards (bunt)
         const colors = [
             '#ff6b6b', // red
             '#ffd93d', // yellow
@@ -368,25 +410,39 @@
             addDragAndClick(block, 'sunArc');
         }
 
-        // Hilfsfunktion für Drag & Click
+
+
+        // Hilfsfunktion für Drag & Click - angepasst v1.0.4 damit Sonnenbogen und History-Werte nicht gleichzeitig öffnen -> jeder Klick hat openHistory() aufgerufen
         function addDragAndClick(block, v) {
             const handle = block.querySelector('.drag-handle');
-            block.addEventListener('click', (e) => { if (e.target === handle) return; openHistory(v); });
+
+            block.addEventListener('click', (e) => { 
+                if (e.target === handle) return; 
+                
+                if (v == 'customLargeBlock' || v == 'map' || v == 'sunArc') return; // s.o.: Damit diese drei nicht auch history laden
+
+                openHistory(v); 
+            });
+
             handle.addEventListener('dragstart', (e) => { 
                 draggedItem = block; 
                 block.classList.add('dragging'); 
                 e.dataTransfer.effectAllowed = 'move'; 
                 try { e.dataTransfer.setData('text/plain',''); } catch{} 
             });
+
             handle.addEventListener('dragend', (e) => { 
                 draggedItem = null; 
                 block.classList.remove('dragging'); 
             });
         }
 
+
+
         // ✅ Erzeuge alle Blöcke in blockOrder
         blockOrder.forEach((v, idx) => {
             if (v === 'sunrise' || v === 'sunset') return; // handled by Sun Arc Block
+
             if (v === 'map') {
                 createLargeBlock();
             }else if (v === 'sunarc') {
@@ -432,139 +488,131 @@
             // hier z.B. hovered class entfernen, wenn du optische Hinweise willst
         });
 
+        // ===========================
+        // ===== HISTORY MODAL ===== v1.0.3
+        // ===========================
 
-        // HISTORY MODAL functions
+        // - Backend liefert fertiges MatPlotLib-PNG
+        // - Browser lädt das Bild: /history_plot.png?... 
+
+
+        // Wahrscheinlich veraltet...
         const historyOverlay = document.getElementById('historyOverlay');
         const historyModal = document.getElementById('historyModal');
         const historyList = document.getElementById('historyList');
         const historyTitle = document.getElementById('historyTitle');
         const historyClose = document.getElementById('historyClose');
 
-        const historyMap = {
-            "currentTemperature": "currentTemperature_history",
-            "current-temperature": "currentTemperature_history",
-
-            "feelsLike": "feelsLike_history",
-            "feels-like": "feelsLike_history",
-
-            "tempMin": "tempMin_history",
-            "temp-min": "tempMin_history",
-
-            "tempMax": "tempMax_history",
-            "temp-max": "tempMax_history",
-
-            "humidity": "humidity_history",
-            "windSpeed": "windSpeed_history",
-            "wind-speed": "windSpeed_history",
-
-            "pressure": "pressure_history"
+        // ======================================================================
+        // Mapping der UI-Card -> OpenMeteo Variable (Benannt wie im Backend!)
+        //=======================================================================
+        const openMeteoVarMap = {
+            currentTemperature: "temperature_2m",
+            feelsLike:          "temperature_2m",
+            tempMin:            "temperature_2m",
+            tempMax:            "temperature_2m",
+            humidity:           "relative_humidity_2m",
+            windSpeed:          "wind_speed_10m"
         };
 
+        // Letzte angeklickte Card für das reloaden merken
+        let lastHistoryVar = null;        
+
         function openHistory(variable) {
+            lastHistoryVar = variable;
+
             const label = labelMap[variable] || variable;
-            const unit = unitMap[variable] || '';
-            const historyKey = variable + "_history";
 
-            fetch('/weather')
-                .then(res => res.json())
-                .then(data => {
+            // Tage aus Input lesen
+            const daysInput = document.getElementById("historyDays");
+            let days = 7;
 
-                    const container = document.querySelector(`.weather-block[data-var="${variable}"]`);
-                    let color = '#ff5722';
-                    if (container) color = getComputedStyle(container).getPropertyValue('--title-bg').trim() || color;
+            if (daysInput) {
+                const parsed = parseInt(daysInput.value, 10);
+                if (!isNaN(parsed) && parsed >= 1 && parsed <= 14) days = parsed;
+            }
 
-                    const currentStr = elements[variable]?.innerText || '--';
-                    const currentVal = parseFloat(currentStr);
+            // Stadt aus UI holen (steht oben links im Dashboard)
+            const city = (document.getElementById("cityDisplay")?.innerText || "").trim();
 
-                    const xValues = [];
-                    const yValues = [];
+            // Welchen OpenMeteo-Wert laden?
+            const meteoVar = openMeteoVarMap[variable];
 
-                    const history = data?.[historyKey];
+            // Titel im Modal setzen
+            if (historyTitle) historyTitle.innerText = `Verlauf: ${label}`;
 
-                    if (history && Array.isArray(history) && history.length > 0) {
-                        history.forEach(item => {
-                            xValues.push(item.hr);
-                            yValues.push(Number(item.value));
-                        });
+            const plotDiv = document.getElementById("weatherPlot");
+            plotDiv.innerHTML = ""; // sauber leeren
 
-                        // Plot erstellen
-                        const trace = {
-                            x: xValues,
-                            y: yValues,
-                            mode: "lines+markers",
-                            name: `${label} (${unit})`,
-                            line: { color, width: 3 },
-                            marker: { size: 10, color: color, line: { width: 1, color: "#fff" } }
-                        };
+            // Falls kein Wert für die Kachel gefunden wurde: Text setzen
+            if (!meteoVar) {
+                plotDiv.style.display = "flex";
+                plotDiv.style.alignItems = "center";
+                plotDiv.style.justifyContent = "center";
+                plotDiv.style.color = "white";
+                plotDiv.style.fontSize = "16px";
+                plotDiv.innerText = "⚠️ Für diese Kachel ist noch keine History angebunden.";
+            } else {
+                // Bildvariable erzeugen
+                const img = document.createElement("img");
+                img.alt = `History Plot: ${label}`;
+                img.style.width = "100%";
+                img.style.height = "100%";
+                img.style.objectFit = "contain";
+                img.style.borderRadius = "10px";
 
-                        const layout = {
-                            title: { text: `${label} Verlauf`, font: { size: 16, color: "white" } },
-                            xaxis: {
-                                title: "Stunden relativ jetzt",
-                                titlefont: { color: "white" },
-                                tickfont: { color: "white" },
-                                tickvals: xValues,
-                                ticktext: xValues.map(hr => `${hr >= 0 ? '+' + hr : hr}h`),
-                                gridcolor: "rgba(255,255,255,0.3)",
-                                zeroline: false
-                            },
-                            yaxis: {
-                                title: `${label} [${unit}]`,
-                                titlefont: { color: "white" },
-                                tickfont: { color: "white" },
-                                gridcolor: "rgba(255,255,255,0.3)",
-                                zeroline: false
-                            },
-                        margin: { t: 50, l: 50, r: 20, b: 50 },
-                        font: { family: "Arial, sans-serif", size: 12 },
-                        plot_bgcolor: "rgba(0,0,0,0)",
-                        paper_bgcolor: "rgba(0,0,0,0)",
-                        showlegend: false
-                        };
+                // War notwendig, damit der Browser nicht ein altes Bild zeigt. Zeitstempel "jetzt" setzen
+                const bust = Date.now();
+                
+                // Bild reinladen
+                img.src =
+                `/history_plot.png?var=${encodeURIComponent(meteoVar)}` +
+                `&days=${encodeURIComponent(days)}` +
+                `&city=${encodeURIComponent(city)}` +
+                `&v=${bust}`;
 
-                        let plotDiv = document.getElementById('weatherPlot');
-                        if (!plotDiv) {
-                            plotDiv = document.createElement('div');
-                            plotDiv.id = 'weatherPlot';
-                            plotDiv.style.width = '100%';
-                            plotDiv.style.height = '100%';
-                            historyModal.appendChild(plotDiv);
-                        }
+                img.onerror = () => {
+                plotDiv.innerHTML = "";
+                plotDiv.style.display = "flex";
+                plotDiv.style.alignItems = "center";
+                plotDiv.style.justifyContent = "center";
+                plotDiv.style.color = "white";
+                plotDiv.style.fontSize = "16px";
+                plotDiv.innerText = "⚠️ Keine Plot-Daten verfügbar (Backend/API).";
+                };
 
-                        // Kleine Verzögerung, damit das Div wirklich sichtbar ist
-                        setTimeout(() => {
-                            Plotly.newPlot(plotDiv, [trace], layout, { staticPlot: true, displayModeBar: false, responsive: true });
-                        }, 5); // 5ms reicht meist
+                plotDiv.appendChild(img);
 
-                        Plotly.newPlot(plotDiv, [trace], layout, { staticPlot: true, displayModeBar: false, responsive: true });
+                const info = document.getElementById("historyInfo");
+                if (info) info.innerText = `${city} · ${days} Tage · Matplotlib`;
+            }
 
-                    } else {
-                        // Keine Historie → Text anzeigen
-                        let plotDiv = document.getElementById('weatherPlot');
-                        if (!plotDiv) {
-                            plotDiv = document.createElement('div');
-                            plotDiv.id = 'weatherPlot';
-                            plotDiv.style.width = '100%';
-                            plotDiv.style.height = '100%';
-                            plotDiv.style.display = 'flex';
-                            plotDiv.style.alignItems = 'center';
-                            plotDiv.style.justifyContent = 'center';
-                            plotDiv.style.color = 'white';
-                            plotDiv.style.fontSize = '16px';
-                            historyModal.appendChild(plotDiv);
-                        }
-                        plotDiv.innerText = '⚠️ Keine Daten verfügbar';
-                    }
+            // Overlay anzeigen
+            historyOverlay.classList.remove("history-hidden");
+            historyOverlay.classList.add("history-show");
+            }
 
-                    // Overlay anzeigen
-                    historyOverlay.classList.remove('history-hidden');
-                    historyOverlay.classList.add('history-show');
-                });
+            // Reload Button
+            const historyReload = document.getElementById("historyReload");
+            if (historyReload) {
+            historyReload.addEventListener("click", () => {
+                if (lastHistoryVar) openHistory(lastHistoryVar);
+            });
         }
 
-        function closeHistory() { historyOverlay.classList.remove('history-show'); historyOverlay.classList.add('history-hidden'); }
-            historyClose.addEventListener('click', closeHistory);
-            historyOverlay.addEventListener('click', (e)=> { if (e.target === historyOverlay) closeHistory(); });
+
+        // History wieder schließen
+        function closeHistory() {
+            historyOverlay.classList.remove('history-show');
+            historyOverlay.classList.add('history-hidden');
+        }
+
+        historyClose.addEventListener('click', closeHistory);
+
+        historyOverlay.addEventListener('click', (e) => {
+            if (e.target === historyOverlay) closeHistory();
+        });
+
 
 
         // Updates vom Server empfangen (SocketIO)
@@ -794,6 +842,8 @@
         updateApiStatus();
         setInterval(updateApiStatus, 15000);
     </script>
+
+
 </body>
 
 </html>

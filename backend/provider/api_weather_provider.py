@@ -1,5 +1,5 @@
 ##################################################
-# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.1
+# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.4
 ##################################################
 
 """
@@ -16,7 +16,7 @@ Ziel:
 import os
 import logging
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.services import data_normalizer
 
@@ -153,7 +153,7 @@ class APIWeatherProvider:
             logger.error(f"❌ Fehler beim Parsen der API-Antwort: {e}")
             return None
 
-        logger.debug(f"RAW API DATA: {raw_data}") # JULIAN TEST
+        logger.debug(f"RAW API DATA: {raw_data}") # DEBUG: Gibt die Rohdaten aus so wie sie von der API kamen
 
         # ---------------------------------------------
         # 6️⃣ Rohdaten normalisieren
@@ -173,7 +173,8 @@ class APIWeatherProvider:
         # 7️⃣ Metadaten ergänzen
         # ---------------------------------------------
         
-        normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"
+       # normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"                               #Test, laut VSCode veraltete Schreibweise
+        normalized_data["lastUpdated"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")      #Test, neu s.o.
 
         logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST DEBUG
 
