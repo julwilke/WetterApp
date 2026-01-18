@@ -412,16 +412,23 @@
 
 
 
-        // Hilfsfunktion für Drag & Click - angepasst v1.0.4 damit Sonnenbogen und History-Werte nicht gleichzeitig öffnen -> jeder Klick hat openHistory() aufgerufen
+        // Hilfsfunktion für Drag & Click - angepasst v1.0.4 damit Sonnenbogen und History/Forecast-Werte nicht gleichzeitig öffnen -> jeder Klick hat openHistoryAndForecast() aufgerufen
         function addDragAndClick(block, v) {
             const handle = block.querySelector('.drag-handle');
+
+            // Auswählen, welche Kacheln Werte laden sollen (nur die, für die Forecast und History vorliegt) (außer sonderregel unten für SunArc etc.)
+            const timeseriesEnabled = new Set([
+                "currentTemperature",
+                "humidity",
+                "windSpeed"
+            ])
 
             block.addEventListener('click', (e) => { 
                 if (e.target === handle) return; 
                 
-                if (v == 'customLargeBlock' || v == 'map' || v == 'sunArc') return; // s.o.: Damit diese drei nicht auch history laden
+                if (v == 'customLargeBlock' || v == 'map' || v == 'sunArc') return; // s.o.: Damit diese drei nicht auch history und forecast laden
 
-                openHistory(v); 
+                openHistoryAndForecast(v); 
             });
 
             handle.addEventListener('dragstart', (e) => { 
@@ -488,15 +495,20 @@
             // hier z.B. hovered class entfernen, wenn du optische Hinweise willst
         });
 
-        // ===========================
-        // ===== HISTORY MODAL ===== v1.0.3
-        // ===========================
-
-        // - Backend liefert fertiges MatPlotLib-PNG
-        // - Browser lädt das Bild: /history_plot.png?... 
 
 
-        // Wahrscheinlich veraltet...
+        // =================================
+        // ===== HISTORY / FORECAST MODAL ===== v1.0.0
+        // =================================
+
+        // - Backend liefert fertige MatPlotLib-PNG für History und Forecast
+        // - Browser lädt die Bilder:
+        //  - /history_plot.png... 
+        //  - /forecast_plot.png...
+        // TODO: Noch ist vieles nach history benannt. Später besser mit Forecast ersetzen/ergänzen oder neutrales Wort für beides. Noch nicht geschehen da dann auch JavaScript umgebaut werden muss 
+
+
+        //heißt noch history, ist aber auch forecast
         const historyOverlay = document.getElementById('historyOverlay');
         const historyModal = document.getElementById('historyModal');
         const historyList = document.getElementById('historyList');
@@ -504,24 +516,55 @@
         const historyClose = document.getElementById('historyClose');
 
         // ======================================================================
-        // Mapping der UI-Card -> OpenMeteo Variable (Benannt wie im Backend!)
+        // Mapping der Frontend-Card -> OpenMeteo Variable (Benannt wie im Backend!)
         //=======================================================================
         const openMeteoVarMap = {
             currentTemperature: "temperature_2m",
-            feelsLike:          "temperature_2m",
-            tempMin:            "temperature_2m",
-            tempMax:            "temperature_2m",
+            //feelsLike:          "temperature_2m",
+            //tempMin:            "temperature_2m",
+            //tempMax:            "temperature_2m",
             humidity:           "relative_humidity_2m",
             windSpeed:          "wind_speed_10m"
         };
 
         // Letzte angeklickte Card für das reloaden merken
-        let lastHistoryVar = null;        
+        let lastCardVar = null;              
 
-        function openHistory(variable) {
-            lastHistoryVar = variable;
+        // optisch aufbessern/formatieren, wird von history und forecast verwendet
+        function setCenteredMessage(container, text) {
+            container.innerHTML = "";
+            container.style.display = "flex";
+            container.style.alignItems = "center";
+            container.style.justifyContent = "center";
+            container.style.color = "white";
+            container.style.fontSize = "16px";
+            container.innerText = text;
+        }
 
-            const label = labelMap[variable] || variable;
+        function makeSectionTitle(text, margin) {
+            const el = document.createElement("div");
+            el.style.color = "white";
+            el.style.fontWeight = "600";
+            el.style.margin = margin || "4px 0";
+            el.innerText = text;
+            return el;
+        }
+
+        function makePlotImage(altText) {
+            const img = document.createElement("img");
+            img.alt = altText;
+            img.style.width = "100%";
+            img.style.objectFit = "contain";
+            img.style.borderRadius = "10px";
+            return img;
+        }
+
+
+        // ===== Funktion zum History/Forecast Modal öffnen =====
+        function openHistoryAndForecast(variable) {
+            lastCardVar = variable;
+
+            const label = (typeof labelMap !== "undefined" && labelMap[variable]) ? labelMap[variable] : variable;
 
             // Tage aus Input lesen
             const daysInput = document.getElementById("historyDays");
@@ -539,80 +582,111 @@
             const meteoVar = openMeteoVarMap[variable];
 
             // Titel im Modal setzen
-            if (historyTitle) historyTitle.innerText = `Verlauf: ${label}`;
+            if (historyTitle) historyTitle.innerText = `Zeitverlauf: ${label}`;
 
             const plotDiv = document.getElementById("weatherPlot");
             plotDiv.innerHTML = ""; // sauber leeren
 
+            plotDiv.style.display = "block";
+            plotDiv.innerHTML = "";
+
             // Falls kein Wert für die Kachel gefunden wurde: Text setzen
             if (!meteoVar) {
-                plotDiv.style.display = "flex";
-                plotDiv.style.alignItems = "center";
-                plotDiv.style.justifyContent = "center";
-                plotDiv.style.color = "white";
-                plotDiv.style.fontSize = "16px";
-                plotDiv.innerText = "⚠️ Für diese Kachel ist noch keine History angebunden.";
-            } else {
-                // Bildvariable erzeugen
-                const img = document.createElement("img");
-                img.alt = `History Plot: ${label}`;
-                img.style.width = "100%";
-                img.style.height = "100%";
-                img.style.objectFit = "contain";
-                img.style.borderRadius = "10px";
+                setCenteredMessage(plotDiv, "⚠️ Für diese Kachel ist noch keine History/Forecast angebunden.");
+            }
+            else {
 
                 // War notwendig, damit der Browser nicht ein altes Bild zeigt. Zeitstempel "jetzt" setzen
-                const bust = Date.now();
+                const bust = Date.now()
+
+
+
+                // ===== 1) HISTORY =====
+                
+                 const hTitle = makeSectionTitle("Vergangenheit");        
+                const historyImg = makePlotImage('History Plot: ${label}');    
                 
                 // Bild reinladen
-                img.src =
+                historyImg.src =
                 `/history_plot.png?var=${encodeURIComponent(meteoVar)}` +
                 `&days=${encodeURIComponent(days)}` +
                 `&city=${encodeURIComponent(city)}` +
                 `&v=${bust}`;
 
-                img.onerror = () => {
-                plotDiv.innerHTML = "";
-                plotDiv.style.display = "flex";
-                plotDiv.style.alignItems = "center";
-                plotDiv.style.justifyContent = "center";
-                plotDiv.style.color = "white";
-                plotDiv.style.fontSize = "16px";
-                plotDiv.innerText = "⚠️ Keine Plot-Daten verfügbar (Backend/API).";
+                historyImg.onerror = () => {
+                    setCenteredMessage(plotDiv, "⚠️ Keine History-Plot-Daten verfügbar (Backend/API).");
                 };
 
-                plotDiv.appendChild(img);
+
+
+                // ===== 2) FORECAST =====
+                const fTitle = makeSectionTitle("Vorhersage", "12px 0 4px 0");     
+                const forecastImg = makePlotImage(`Forecast Plot: ${label}`);
+                
+                // Forecast nutzt das gleiche days-Inputfeld
+                const forecastDays = days; // alternativ: 14 als Standard?
+
+                forecastImg.src =
+                    `/forecast_plot.png?var=${encodeURIComponent(meteoVar)}` +
+                    `&days=${encodeURIComponent(forecastDays)}` +
+                    `&city=${encodeURIComponent(city)}` +
+                    `&v=${bust}`;
+
+                forecastImg.onerror = () => {
+                    const warn = document.createElement("div");
+                    warn.style.color = "white";
+                    warn.style.opacity = "0.9";
+                    warn.style.marginTop = "6px";
+                    warn.innerText = "⚠️ Keine Forecast-Plot-Daten verfügbar (Backend/API).";
+                    plotDiv.appendChild(warn);
+                };
+
+
+
+                // ===== BEIDE BILDER UNTEREINANDER EINHÄNGEN
+                plotDiv.appendChild(hTitle);
+                plotDiv.appendChild(historyImg);
+                plotDiv.appendChild(fTitle);
+                plotDiv.appendChild(forecastImg);
 
                 const info = document.getElementById("historyInfo");
-                if (info) info.innerText = `${city} · ${days} Tage · Matplotlib`;
+
+                if (info) info.innerText = `${city} · History + Forecast · ${days} Tage · Matplotlib`;
             }
 
-            // Overlay anzeigen
-            historyOverlay.classList.remove("history-hidden");
-            historyOverlay.classList.add("history-show");
+            // Modal anzeigen
+            if (historyOverlay) {
+                historyOverlay.classList.remove("history-hidden");
+                historyOverlay.classList.add("history-show");
+            }
             }
 
-            // Reload Button
-            const historyReload = document.getElementById("historyReload");
+            // Reload Button einmalig für beide
             if (historyReload) {
             historyReload.addEventListener("click", () => {
-                if (lastHistoryVar) openHistory(lastHistoryVar);
+                if (lastCardVar) openHistoryAndForecast(lastCardVar);
+            });
+            }
+
+
+        // Modal wieder schließen
+        function closeHistory() {
+            if (!historyOverlay) return;
+            historyOverlay.classList.remove("history-show");
+            historyOverlay.classList.add("history-hidden");
+            }
+
+        if (historyClose) historyClose.addEventListener("click", closeHistory);
+
+        if (historyOverlay) {
+            historyOverlay.addEventListener("click", (e) => {
+                if (e.target === historyOverlay) closeHistory();
             });
         }
 
-
-        // History wieder schließen
-        function closeHistory() {
-            historyOverlay.classList.remove('history-show');
-            historyOverlay.classList.add('history-hidden');
-        }
-
-        historyClose.addEventListener('click', closeHistory);
-
-        historyOverlay.addEventListener('click', (e) => {
-            if (e.target === historyOverlay) closeHistory();
-        });
-
+        // ===================================
+        // ENDE VON HISTORY / FORECAST MODAL 
+        // ===================================
 
 
         // Updates vom Server empfangen (SocketIO)
