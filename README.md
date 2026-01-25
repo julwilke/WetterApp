@@ -73,6 +73,7 @@ python -m venv venv
 
 # Windows
 venv\Scripts\activate
+
 # macOS/Linux
 source venv/bin/activate
 ```
@@ -81,6 +82,8 @@ source venv/bin/activate
 # Dependencies installieren
 pip install -r requirements.txt
 ```
+
+### Konfiguration
 
 ```bash
 # Umgebungsvariablen konfigurieren
@@ -94,6 +97,7 @@ OPENWEATHER_API_KEY = dein_key_hier
 LOG_LEVEL=INFO
 ```
 
+### Starten
 ```bash
 # Dashboard starten
 python app.py
@@ -101,7 +105,7 @@ python app.py
 (läuft dann unter: http://127.0.0.1:5000)
 ```
 
-### Alternative: CLI-Version mit API der WetterApp
+### Alternative/Debug: CLI-Version mit API der WetterApp
 
 ```bash
 # CLI-Version starten
@@ -128,7 +132,7 @@ WetterApp/
 │   │
 │   ├── provider/
 │   │   ├── csv_weather_provider.py     # CSV-Datenquelle
-│   │   └── api_weather_provider. py     # API-Gerüst (OpenWeather)
+│   │   └── api_weather_provider. py    # API-Gerüst (OpenWeather)
 │   │
 │   └── services/
 │       ├── data_normalizer.py          # Daten-Normalisierung
@@ -153,7 +157,7 @@ WetterApp/
 
 # 🛠️ Technology Stack
 
-### Backend (Python)
+## Backend (Python)
 
 | Package | Verwendung |
 |---------|------------|
@@ -166,7 +170,7 @@ WetterApp/
 | **requests** |  HTTP-Client für API-Calls (API-Provider vorbereitet) |
 | **Matplotlib**  | Serverseitige Erzeugung von Verlaufsdiagrammen |
 
-### Frontend
+## Frontend
 
 | Technologie | Verwendung |
 |-------------|------------|
@@ -177,7 +181,7 @@ WetterApp/
 | **Socket.IO Client** | WebSocket-Kommunikation mit Backend |
 | **Leaflet** | Interaktive Kartenvisualisierung (über Folium) |
 
-### Entwicklung & Tools
+## Entwicklung & Tools
 
 - **Python** 3.9+
 - **pip** 
