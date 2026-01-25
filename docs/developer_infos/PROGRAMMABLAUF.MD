@@ -1,5 +1,7 @@
 # Programmablauf
 
+# TODO: Auf aktuelles Programm verbessern 
+
 ## 1. Boot-Sequenz: `app.py`
 
 - startet das Backend. Mehr nicht. Kein Routing, keine Logik.

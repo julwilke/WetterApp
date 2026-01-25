@@ -51,7 +51,7 @@ Die **WetterApp** ist eine Web-Anwendung, die Wetterdaten abruft und visualisier
 |-----------------------|----------------|----------------------|--------------------------------------------------------|
 | **Aktualwerte**       | OpenWeatherMap | Current weather data | https://openweathermap.org/current                     |
 | **Historische Werte** | OpenMeteo      | Historical Weather   | https://open-meteo.com/en/docs/historical-weather-api  |
-| **Vorhersage**        | *TODO*         | Historical Forecast  | https://open-meteo.com/en/docs/historical-forecast-api |
+| **Vorhersage**        | OpenMeteo         | Historical Forecast  | https://open-meteo.com/en/docs/historical-forecast-api |
 
 
 # 🛠️ Installation & Verwendung

@@ -14,13 +14,7 @@ Aufgaben:
 """
 
 # =============== IMPORTS ====================
-import os
 import logging
-
-# Brauche ich die hier überhaupt? 
-import matplotlib
-matplotlib.use("Agg") # Server ohne Display
-import matplotlib.pyplot as plt
 
 from datetime import datetime, timedelta, timezone
 
@@ -31,6 +25,7 @@ from geopy.geocoders import Nominatim
 
 from io import BytesIO
 
+# Eigene Imports
 from backend.provider.csv_weather_provider import CSVWeatherProvider
 from backend.services import generate_map
 
@@ -62,9 +57,9 @@ class WeatherDashboard:
             static_folder='../weather_dashboard/static'
         )
 
-        self.socketio = SocketIO(self.app, cors_allowed_origins="*") # Hier alle Origins erlaubt, ich denke aber für das Studentenprojekt ist das in Ordnung 
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*") # Noch alle CORS-Origins erlaubt, da es sich um Studentenprojekt handelt 
 
-        # Provider auswählen: Entwerder eine der APIs oder Default CSV-Provider nutzen
+        # Provider auswählen: API oder Provider | Als Default CSV-Provider nutzen
         if provider is not None:
             self.provider = provider
         else:
@@ -102,7 +97,7 @@ class WeatherDashboard:
         def index():
             return render_template('index.html')
 
-        # Route für den API-Status / sichtbar im Dashboard oben rechts. unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
+        # Route für den API-Status / sichtbar im Dashboard oben rechts. Unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
         @self.app.route('/status')
         def status():
             
@@ -124,8 +119,7 @@ class WeatherDashboard:
                     provider_key: {
                         "status": "ok" if self.last_polled is not None else "unbekannt",
                         "lastPolled": (
-                            self.last_polled.isoformat() + "Z"
-                            if self.last_polled else None
+                            self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None
                         )
                     }
                 }
@@ -156,9 +150,8 @@ class WeatherDashboard:
                     "error": "Keine Stadt gesetzt"
                     }), 400  # 400 = Bad Request                  
                 
-            #now = datetime.utcnow()            # Aktuelle Zeit für den Ablauf der Gültigkeit der Werte setzen
-            now = datetime.now(timezone.utc)    # Test Julian s.o.
-
+            now = datetime.utcnow()            # Aktuelle Zeit abstempeln
+        
             # ===== 2) REFRESH DER DATEN - ENTSCHEIDUNG =====
          
             # Refresh-Variable TRUE setzen, wenn 

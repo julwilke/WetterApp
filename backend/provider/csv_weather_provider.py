@@ -4,7 +4,7 @@
 
 # =============== IMPORTS ====================
 import pandas as pd
-import os               #J: Für Fehlerbehandlung falls die Datei/Pfad nicht gefunden wurde
+import os               
 import logging
 
 from backend.services import data_normalizer
@@ -20,6 +20,7 @@ class CSVWeatherProvider:
 
     def __init__(self, filename="weather_sample.csv"): #J: Hier nicht den Pfad, sondern den Dateinamen nehmen 'filename'
         """Initialisiert den CSVWeatherProvider mit dem Pfad zur CSV-Datei"""
+        
         # J: Neu hinzugefügt um die Probleme beim verschieben der app.py oder .csv (Pfadprobleme) zu lösen:
 
         # Ordner, in dem dieses Skript liegt /WetterApp/backend

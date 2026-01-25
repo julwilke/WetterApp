@@ -1,5 +1,7 @@
 # Erklärung zu tests/test_parse_weather.py
 
+# TODO: fertig machen auf aktuelles Programm test_parse_weather_erklaehrung.py
+
 Kurz: Diese Markdown‑Datei erklärt, was `tests/test_parse_weather.py` prüft, wie du die Tests lokal ausführst und welche Voraussetzungen erfüllt sein müssen.
 
 ## Zweck der Tests
