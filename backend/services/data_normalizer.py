@@ -1,5 +1,5 @@
 ##############################################
-#          DATA NORMALIZER - 1.0.2           #
+#          DATA NORMALIZER - 1.0.3           #
 ##############################################
 
 # Normalizer für Wetterdaten. Konvertiert rohe Daten in das vom Dashboard erwartete (immer gleiche) Format. 
@@ -10,6 +10,7 @@
 
 import numbers
 
+# Hilfsfunktion -> int
 def _to_int(value, default=None):
     """Konvertiert value in einen int, falls möglich. Andernfalls wird default zurückgegeben."""
 
@@ -34,7 +35,7 @@ def _to_int(value, default=None):
             return default
     return default
 
-
+# Hilfsfunktion -> float
 def _to_float(value, default=None):
     """Konvertiert value in einen float, falls möglich. Andernfalls wird default zurückgegeben."""
 
@@ -57,7 +58,7 @@ def _to_float(value, default=None):
             return default
     return default
 
-
+# Hilfsfunktion -> String
 def _to_str(value, default=""):
     """Konvertiert value in einen str, falls möglich. Andernfalls wird default zurückgegeben."""
 
@@ -65,7 +66,7 @@ def _to_str(value, default=""):
         return default
     return str(value).strip()
 
-
+# Hilfsfunktion -> Bool
 def _to_bool(value, default=False):
     """Konvertiert value in einen bool, falls möglich. Andernfalls wird default zurückgegeben."""
 
@@ -81,7 +82,7 @@ def _to_bool(value, default=False):
         return bool(value)
     return default
 
-
+# Hauptfunktion zur Normalisierung
 def normalize_weather_data(raw: dict) -> dict:
     """
     Nimmt rohe Wetterdaten (z.B. aus CSV oder einer API) und normalisiert:
@@ -160,7 +161,7 @@ def normalize_weather_data(raw: dict) -> dict:
     snow1h = _to_float(raw.get("snow1h") or raw.get("snow_1h"), default=0.0)
     snow3h = _to_float(raw.get("snow3h") or raw.get("snow_3h"), default=0.0)
 
-    # Dictionairy Final zusammenstellen
+    # Dictionairy final zusammenstellen
     normalized_data = {
         "city": city,
         "currentTemperature": temp,

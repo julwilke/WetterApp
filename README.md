@@ -1,12 +1,11 @@
 <h1 align="center">🌦️ WetterApp</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.1-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-1.0.4-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/status-stable-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>
 
-<p align="center"><img src="https://img.shields.io/badge/python-3.9%2B-yellow? style=for-the-badge&logo=python&logoColor=white" /></p>
 
 <h2 align="center">Ein Gruppenprojekt im Rahmen des Masterstudiums "Angewandte KI"</h1>
 
@@ -14,48 +13,55 @@
   <img src="docs/WetterApp_Screenshot-v1_0_1.png" alt="WetterApp Demo" width="700"/>
 </p>
 
-## 📋 Überblick
+# 📋 Überblick
 
-Die WetterApp ist eine Web-Anwendung zur Visualisierung und Analyse von Wetterdaten für eine ausgewählte Stadt.
+Die **WetterApp** ist eine Web-Anwendung, die Wetterdaten abruft und visualisiert:
 
-**Kernidee**:
-
-- Abruf von Wetterdaten aus verschiedenen Quellen (bislang API "OpenWeatherMap" und .csv)
-- Darstellung im Browser mit Karte und Live-Updates
-
-**Highlights**:
-
+- **API-Calls** sorgen für die Datengrundlage (Aktual: OpenWeatherMap, Historisch: OpenMeteo)
 - **Interaktive Karte** zeigt die aktuelle Stadt mit Temperatur-Pin (`Folium`)
 - **Echtzeit-Updates** über WebSockets (``Socket.IO``)
+- **Historische Verlaufsansicht** mit serverseitig gerenderten Matplotlib-Plots (Open-Meteo Archive)
 - **Flexible Datenquellen**: CSV-Dateien oder externe APIs (z. B. OpenWeather)
 - **Responsives Design** über ``Bootstrap``
 - **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
 
-## ✨ Features
+
+# ✨ Features
 
 ### Frontend
 
 - 🗺️ **Live-Karte**:  Zeigt gewählte Stadt mit Temperatur-Marker
-- 📊 **Wetter-Widgets**: Temperatur, Luftfeuchtigkeit, Windgeschwindigkeit, Sonnenauf-/-untergang, etc.
+- 📊 **Wetter-Widgets**: Temperatur, Luftfeuchtigkeit, Windgeschwindigkeit, Sonnenauf-/-untergang
+- 📈 **Verlaufsansicht (History)**: Anzeige historischer Wetterdaten als Diagramm in einem Overlay
 - 🔄 **WebSocket-Updates**:  Kein Seiten-Neuladen nötig
 - 🎨 **Modernes UI**: Bootstrap, responsives Design
 
 ### Backend
 
-- 🔌 **Provider-Architektur** (CSV / OpenWeather API)
-- 🧩 **Data Normalizer** für ein einheitliches Datenformat
-- 🛡️ **Fehlerbehandlung & Fallbacks** bei ungültigen Eingaben oder API-Problemen
-- 🧾 **Zentrales Logging** - konfigurierbar über .env
-- 🔄 **Saubere Trennung** von Stadtwechsel (WebSocket) und Wetterabfrage (HTTP)
+- 🔌 **Provider-Architektur**: Einfacher Wechsel zwischen CSV und API
+- 📝 **Data Normalizer**: Vereinheitlicht Daten aus verschiedenen Quellen -> stets gleiches Format ans Frontend
+- 📊 **Serverseitige Plot-Erzeugung**: Historische Zeitreihen werden im Backend mit Matplotlib gerendert
+- 🛡️ **Robuste Fehlerbehandlung**: Validierung, Logging, Fallbacks
+- 🗂️ **Saubere Struktur**: Getrennte Layer (Provider, Services, Dashboard)
 
-## 🛠️ Installation & Verwendung
+
+# 📡 API-Schnittstellen
+
+| Daten                 | Server         | API                  | URL                                                    |
+|-----------------------|----------------|----------------------|--------------------------------------------------------|
+| **Aktualwerte**       | OpenWeatherMap | Current weather data | https://openweathermap.org/current                     |
+| **Historische Werte** | OpenMeteo      | Historical Weather   | https://open-meteo.com/en/docs/historical-weather-api  |
+| **Vorhersage**        | *TODO*         | Historical Forecast  | https://open-meteo.com/en/docs/historical-forecast-api |
+
+
+# 🛠️ Installation & Verwendung
 
 ### Voraussetzungen
 
 - Python 3.9+
 - pip
 
-### Code
+
 ```bash
 # Repository klonen
 git clone https://github.com/julwilke/WetterApp.git
@@ -83,12 +89,12 @@ pip install -r requirements.txt
 # Umgebungsvariablen konfigurieren
 # Erstelle eine .env (oder bennene .env.example um) mit folgendem Inhalt:
 
-# Logging-Level (INFO, DEBUG, ...)
-LOG_LEVEL = INFO 
-
-# Welcher Provider? ('api' (OpenWeatherMap) oder 'csv')
-WEATHER_PROVIDER = csv
+# Welcher Provider? ('api' oder 'csv')
+WEATHER_PROVIDER = api
 OPENWEATHER_API_KEY = dein_key_hier
+
+# Auf welchem Niveau soll der Logger Meldungen ausgeben? (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=INFO
 ```
 
 ### Starten
@@ -112,7 +118,7 @@ $env:OPENWEATHER_API_KEY="DEIN_KEY_HIER"
 python -m cli.cli --ow-city Berlin
 ```
 
-# 🏗 Architekturüberblick
+# 🏗 Architektur (Kern)
 
 ```text
 WetterApp/
@@ -130,7 +136,9 @@ WetterApp/
 │   │
 │   └── services/
 │       ├── data_normalizer.py          # Daten-Normalisierung
-│       └── generate_map. py            # Folium-Karten-Generator
+|       |── history_openmeteo.py        # Zugriff auf Open-Meteo Archive API (History)
+|       |── plotter.py                  # Matplotlib-Plot-Erzeugung (PNG)
+│       └── generate_map. py             # Folium-Karten-Generator
 │
 ├── weather_dashboard/
 │   ├── templates/
@@ -151,30 +159,34 @@ WetterApp/
 
 ## Backend (Python)
 
-- **Flask** - Web-Framework für HTTP-Routen und Template-Rendering
-- **Flask-SocketIO** - WebSocket-Unterstützung für Echtzeit-Updates
-- **Pandas** - CSV-Datenverarbeitung und Filterung
-- **Folium** - Generierung interaktiver Leaflet-Karten
-- **Geopy** - Geocoding (Stadtname → GPS-Koordinaten)
-- **python-dotenv** - Laden von Umgebungsvariablen aus `.env`
-- **requests** - HTTP-Client für API-Calls (API-Provider vorbereitet)
+| Package | Verwendung |
+|---------|------------|
+| **Flask** | Web-Framework für HTTP-Routen und Template-Rendering |
+| **Flask-SocketIO** | WebSocket-Unterstützung für Echtzeit-Updates |
+| **Pandas** |  CSV-Datenverarbeitung und Filterung |
+| **Folium** |  Generierung interaktiver Leaflet-Karten |
+| **Geopy** |  Geocoding (Stadtname → GPS-Koordinaten) |
+| **python-dotenv** | Laden von Umgebungsvariablen aus `.env` |
+| **requests** |  HTTP-Client für API-Calls (API-Provider vorbereitet) |
+| **Matplotlib**  | Serverseitige Erzeugung von Verlaufsdiagrammen |
 
 ## Frontend
 
-- **HTML5** - Markup und Struktur
-- **CSS3** - Styling und Layout
-- **JavaScript (ES6+)** - Client-seitige Logik und DOM-Manipulation
-- **Bootstrap** - Responsive UI-Framework (Grid, Components)
-- **Socket.IO Client** - WebSocket-Kommunikation mit Backend
-- **Leaflet** - Interaktive Kartenvisualisierung
+| Technologie | Verwendung |
+|-------------|------------|
+| **HTML5** | Markup und Struktur |
+| **CSS3** | Styling und Layout |
+| **JavaScript (ES6+)** | Client-seitige Logik und DOM-Manipulation |
+| **Bootstrap** | Responsive UI-Framework (Grid, Components) |
+| **Socket.IO Client** | WebSocket-Kommunikation mit Backend |
+| **Leaflet** | Interaktive Kartenvisualisierung (über Folium) |
 
 ## Entwicklung & Tools
 
 - **Python** 3.9+
-- **pip** für Dependency-Management
-- **Virtual Environment** (venv) für isolierte Umgebung
+- **pip** 
+- **Virtual Environment** (venv) 
 
-----
 
 ## 👥 Team
 
@@ -192,4 +204,4 @@ AGPLv3 — see LICENSE file for full terms.
 
 ---
 
-**Letzte Aktualisierung**: 12.12.2025 by Julian
+**Letzte Aktualisierung**: 14.01.2026

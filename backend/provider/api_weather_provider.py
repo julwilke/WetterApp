@@ -1,6 +1,6 @@
-#####################################################
-# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.2  #
-#####################################################
+####################################################
+# 🌦 API-WEATHER-PROVIDER – OpenWeatherMap - 1.0.5 #
+####################################################
 
 """
 Dieser Provider lädt LIVE-Wetterdaten über eine externe API (OpenWeatherMap).
@@ -16,7 +16,7 @@ Ziel:
 import os
 import logging
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.services import data_normalizer
 
@@ -42,9 +42,7 @@ class APIWeatherProvider:
                            Falls None → wird aus ENV gelesen
         """
 
-        # ------------------------------------------------
-        # 1️⃣ API-Key laden
-        # ------------------------------------------------
+        # ===== 1) API-KEY LADEN =====
 
         # Falls kein Key übergeben wurde → aus Umgebungsvariable lesen
         self.api_key = api_key or os.getenv("OPENWEATHER_API_KEY")
@@ -55,16 +53,15 @@ class APIWeatherProvider:
                 "Bitte OPENWEATHER_API_KEY als Umgebungsvariable setzen."
             )
 
-        # ------------------------------------------------
-        # 2️⃣ Basis-URL für OpenWeather
-        # ------------------------------------------------
+        # ===== 2) BASIS URL FÜR OpenWeatherMap =====
 
         self.base_url = "https://api.openweathermap.org/data/2.5/weather"
 
         logger.info("🌐 APIWeatherProvider initialisiert")
 
+    
     # ============================================
-    #   HAUPTMETHODE – gleiche Signatur wie CSV
+    #   HAUPTFUNKTION – gleiches Verhalten wie CSV
     # ============================================
 
     def get_weather_for_city(self, city: str):
@@ -79,34 +76,30 @@ class APIWeatherProvider:
                 - normalisierte Wetterdaten
                 - None, falls Fehler oder Stadt nicht gefunden
         """
-
-        # ---------------------------------------------
-        # 1️⃣ Eingabe prüfen
-        # ---------------------------------------------
-
+        
+        # ===== 1) FEHLER ABFANGEN =====
         if city is None or str(city).strip() == "":
             logger.warning("APIWeatherProvider: Leerer Stadtname übergeben.")
             return None
+        
+        if not self.api_key:
+            logger.error("API WeatherProvider: Kein API-Key gesetzt.")
 
         city_clean = str(city).strip()
 
         logger.info(f"🌍 API-Abfrage für Stadt: {city_clean}")
+  
 
-        # ---------------------------------------------
-        # 2️⃣ Request-Parameter bauen
-        # ---------------------------------------------
-
+        # ===== 2) REQUEST-PARAMETER BAUEN =====        
         params = {
             "q": city_clean,
             "appid": self.api_key,
             "units": "metric",      # Celsius
-            "lang": "de"             # Deutsche Wetterbeschreibungen
+            "lang": "de"            # Deutsche Wetterbeschreibungen
         }
 
-        # ---------------------------------------------
-        # 3️⃣ API-Request ausführen
-        # ---------------------------------------------
 
+        # ===== 3) API REQUEST =====
         try:
             response = requests.get(self.base_url, params=params, timeout=10)
 
@@ -114,10 +107,8 @@ class APIWeatherProvider:
             logger.error(f"❌ API-Request fehlgeschlagen: {e}")
             return None
 
-        # ---------------------------------------------
-        # 4️⃣ HTTP-Status prüfen
-        # ---------------------------------------------
 
+        # ===== 4) HTTP-STATUS PRÜFEN =====
         if response.status_code != 200:
             logger.warning(
                 f"⚠️ API lieferte Fehlercode {response.status_code} "
@@ -125,12 +116,12 @@ class APIWeatherProvider:
             )
             return None
 
-        # ---------------------------------------------
-        # 5️⃣ JSON parsen
-        # ---------------------------------------------
+
+        # ===== 5) JSON PARSEN =====
 
         try:
             raw_data = response.json()
+            logger.debug(f"RAW-DATA API: {raw_data}")
 
             # raw_data (JSON Antwort) "flach" machen in ein-Zeilen-dict, damit data_normalizer es versteht
             flat_raw = {
@@ -153,18 +144,15 @@ class APIWeatherProvider:
             logger.error(f"❌ Fehler beim Parsen der API-Antwort: {e}")
             return None
 
-        logger.debug(f"RAW API DATA: {raw_data}") # JULIAN TEST
+        
 
-        # ---------------------------------------------
-        # 6️⃣ Rohdaten normalisieren
-        # ---------------------------------------------
-        """
-        raw_data ist das originale OpenWeather JSON.
-        flat_data ist "abgeflacht"/"einzeilig gemacht" damit es aussieht wie das CSV Sample.
-        Wir normalisieren es (genau wie im CSV provider), damit:
-        - Frontend IMMER das gleiche Datenformat bekommt
-        - CSV & API identisch nutzbar sind
-        """ 
+        # ===== 6) ROHDATEN NORMALISIEREN =====
+        # - raw_data ist das originale OpenWeather JSON.
+        # - flat_data ist "abgeflacht"/"einzeilig gemacht" damit es aussieht wie das CSV Sample.
+        # - Wir normalisieren es (genau wie im CSV provider), damit:
+        #   - Frontend IMMER das gleiche Datenformat bekommt
+        #   - CSV & API identisch nutzbar sind
+         
 
         normalized_data = data_normalizer.normalize_weather_data(flat_raw)
 
@@ -173,7 +161,8 @@ class APIWeatherProvider:
         # 7️⃣ Metadaten ergänzen
         # ---------------------------------------------
         
-        normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"
+       # normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"                               #Test, laut VSCode veraltete Schreibweise
+        normalized_data["lastUpdated"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")      #Test, neu s.o.
 
         logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST DEBUG
 

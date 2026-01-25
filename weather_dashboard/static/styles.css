@@ -211,20 +211,115 @@ h1 { text-align: center; }
     font-weight: 800;
 }
 
-/* History modal -> modern horizontal timeline */
-#historyOverlay { align-items: center; justify-content: center; display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; }
-#historyModal { max-width: 900px; width: 95%; background:#071022; border:1px solid #1e2b3b; padding:18px; border-radius:8px; color:#e6eef8; box-shadow:0 12px 30px rgba(0,0,0,0.6); }
-#historyHeader { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-#historyClose { background:transparent; border:none; color:#e6eef8; font-size:20px; }
-.history-item { background:#071022; border:1px solid #1e2b3b; padding:8px; border-radius:6px; min-width:48px; text-align:center; color:#e6eef8; }
-#historyList { position: relative; padding: 28px 12px; display:flex; gap:18px; overflow-x:auto; align-items:flex-end; }
-#historyList::before { content: ''; position: absolute; left: 12px; right: 12px; top: 50%; height: 2px; background: rgba(255,255,255,0.04); transform: translateY(-50%); }
-#historyList > div { background: transparent; border: none; color: #e6eef8; min-width: 84px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:0; }
-#historyList > div > div:first-child { font-size:12px; opacity:0.6; }
-#historyList > div > div:last-child { background:#071022; border:1px solid #1e2b3b; padding:10px 12px; border-radius:8px; font-size:18px; font-weight:700; }
-.history-item .history-time { font-size: 12px; opacity: 0.6; }
-.history-item .history-value { font-size: 20px; font-weight:700; }
-#historyList > div::after { content: ''; width:14px; height:14px; border-radius:50%; background: var(--dot, #7dd3fc); display:block; margin-top: -8px; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+/* ========================= */
+/* HISTORY OVERLAY / MODAL   */
+/* ========================= */
+#historyOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.70);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.history-hidden {
+  display: none !important;
+}
+
+.history-show {
+  display: flex !important;
+}
+
+/* Angepasst auf scrollbar/auto frame, da die beiden Plots zu groß waren*/
+#historyModal {
+  width: 100%;
+  max-width: 1100px;
+  max-height: 65vh;
+  overflow-y: auto;
+  background: #0b1624;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  padding: 14px;
+  color: #e6eef8;
+}
+
+#historyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 12px;
+}
+
+#historyTitle {
+  font-size: 16px;
+}
+
+#historyClose {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #e6eef8;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#historyControls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.history-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.92;
+}
+
+#historyDays {
+  width: 80px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.15);
+  color: #e6eef8;
+}
+
+#historyReload {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #e6eef8;
+  cursor: pointer;
+}
+
+#historyInfo {
+  opacity: 0.70;
+  font-size: 12px;
+}
+
+/* Angepasst auf scrollbar, da durch die Plots alles zu klein war*/
+#weatherPlot {
+  width: 100%;
+  max-height: 65vh;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.10);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+
 
 /* Ensure handle stays grab while card shows pointer */
 .weather-block .drag-handle { cursor: grab; }

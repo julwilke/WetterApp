@@ -1,5 +1,5 @@
 ###############################################
-#   🌦 WETTER-DASHBOARD – BACKEND 1.0.2       #
+#   🌦 WETTER-DASHBOARD – BACKEND 1.0.4       #
 ###############################################
 
 """ 
@@ -16,15 +16,28 @@ Aufgaben:
 # =============== IMPORTS ====================
 import os
 import logging
-from datetime import datetime, timedelta
 
-from flask import Flask, render_template, jsonify
+# Brauche ich die hier überhaupt? 
+import matplotlib
+matplotlib.use("Agg") # Server ohne Display
+import matplotlib.pyplot as plt
+
+from datetime import datetime, timedelta, timezone
+
+from flask import Flask, render_template, jsonify, request, send_file
 from flask_socketio import SocketIO
 
 from geopy.geocoders import Nominatim
 
+from io import BytesIO
+
 from backend.provider.csv_weather_provider import CSVWeatherProvider
 from backend.services import generate_map
+
+from backend.services.history.history_openmeteo import fetch_openmeteo_history_dataframe
+from backend.services.forecast.forecast_openmeteo import fetch_openmeteo_forecast_dataframe
+
+from backend.services.plotter import build_single_history_plot_png, build_single_forecast_plot_png
 
 # ============================================
 #    1) Logging -Konfiguration 
@@ -84,7 +97,12 @@ class WeatherDashboard:
         Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird.
         """
        
-       # Route für den API-Status / sichtbar im Dashboard oben rechts. unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
+        # Route für die Hauptseite     
+        @self.app.route('/')
+        def index():
+            return render_template('index.html')
+
+        # Route für den API-Status / sichtbar im Dashboard oben rechts. unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
         @self.app.route('/status')
         def status():
             
@@ -113,11 +131,7 @@ class WeatherDashboard:
                 }
             })
 
-
-        # Route für die Hauptseite     
-        @self.app.route('/')
-        def index():
-            return render_template('index.html')
+       
 
         # Route für Wetterdaten als JSON wenn Frontend diese anfragt
         @self.app.route('/weather')
@@ -142,8 +156,8 @@ class WeatherDashboard:
                     "error": "Keine Stadt gesetzt"
                     }), 400  # 400 = Bad Request                  
                 
-            now = datetime.utcnow() # Aktuelle Zeit für den Ablauf der Gültigkeit der Werte setzen
-            
+            #now = datetime.utcnow()            # Aktuelle Zeit für den Ablauf der Gültigkeit der Werte setzen
+            now = datetime.now(timezone.utc)    # Test Julian s.o.
 
             # ===== 2) REFRESH DER DATEN - ENTSCHEIDUNG =====
          
@@ -224,7 +238,8 @@ class WeatherDashboard:
                 "city": self.city,        
                 "lat": lat,
                 "lon": lon,
-                "lastPolled": (self.last_polled.isoformat() + "Z") if self.last_polled else None, # Zeitstempel der letzten ERFOLGREICHEN Abfrage
+                                    #"lastPolled": (self.last_polled.isoformat() + "Z") if self.last_polled else None, # Zeitstempel der letzten ERFOLGREICHEN Abfrage
+                "lastPolled": self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None #Test Julian s.o.
             }
 
             # Damit History im Frontend nicht crasht, aber zumindest leer übergeben wird. Kann erweitert werden
@@ -251,7 +266,149 @@ class WeatherDashboard:
 
 
 
-        
+
+        # Route für die Vergangenheitsdaten / History
+              
+        @self.app.route('/history_plot.png')
+        def history_plot_png():
+            """
+            Liefert ein Matplotlib-PNG für eine Variable (var).
+            Standard: letzte 2 Tage, UTC.
+            """
+
+            # Welche Variable wollen wir plotten?
+            var = request.args.get("var", "temperature_2m")
+
+            # Zeitraum in Tagen
+            days = request.args.get("days", "2")
+            
+            try:
+                days = int(days)
+            except Exception:
+                days = 2
+
+            # Stadt: Aus der Anfrage oder ansonsten self.city nehmen
+            city = request.args.get("city")
+            
+            if city is None or str(city).strip() == "":
+                city = self.city
+
+            if city is None or str(city).strip() == "":
+                return jsonify({"error": "Keine Stadt gesetzt"}), 400
+
+            # Datum berechnen
+            end_date = datetime.now(timezone.utc).date() # Julian Test veraltet: datetime.utcnow().date()
+            start_date = end_date - timedelta(days=days)
+
+            # Koordinaten holen
+            lat, lon = self.fetch_coordinates(city)
+
+            # DataFrame holen
+            df = fetch_openmeteo_history_dataframe(
+                lat=lat,
+                lon=lon,
+                start_date=start_date.isoformat(),
+                end_date=end_date.isoformat()
+            )
+
+            # Plot-Beschriftung je nach 'var' (genau wie im Forecast)
+            if var == "temperature_2m":
+                title = f"Temperatur Vergangenheit: {city}"
+                y_label = "°C"
+            elif var == "relative_humidity_2m":
+                title = f"Luftfeuchte Vergangenheit: {city}"
+                y_label = "%"
+            elif var == "wind_speed_10m":
+                title = f"Windgeschwindigkeit Vergangenheit: {city}"
+                y_label = "km/h"
+            else:
+                title = f"History: {city} ({var})"
+                y_label = var
+
+            # Erstellen des Plots
+            png = build_single_history_plot_png(df, var, title, y_label)
+
+            if png is None:
+                return jsonify({"error": "Keine Plot-Daten für History verfügbar"}), 503
+
+            return send_file(
+                BytesIO(png),
+                mimetype="image/png",
+                as_attachment=False,
+                download_name="history.png"
+            )
+
+        # Route für die Zukunftsdaten / Forecast
+        @self.app.route('/forecast_plot.png')
+        def forecast_plot_png():
+            """
+            Liefert ein Matplotlib-PNG für eine Variable (var).
+            Standard: nächste 7 Tage, UTC.
+            """
+
+            # Welche Variable wollen wir plotten?
+            var = request.args.get("var", "temperature_2m")
+
+            # Zeitraum in Tagen
+            days = request.args.get("days", "7")
+
+            try:
+                days = int(days)
+            except Exception:
+                days = 7
+
+            # Begrenzen auf 1...14 Tage
+            if days < 1:
+                days = 1
+            if days > 14:
+                days = 14
+
+            # Stadt: Aus der Anfrage oder ansonsten self.city nehmen
+            city = request.args.get("city")
+
+            if city is None or str(city).strip() == "":
+                city = self.city
+
+            if city is None or str(city).strip() == "":
+                return jsonify({"error": "Keine Stadt gesetzt"}), 400
+
+            # Koordinaten holen
+            lat, lon = self.fetch_coordinates(city)
+
+            df = fetch_openmeteo_forecast_dataframe(
+                lat=lat,
+                lon=lon,
+                days=days
+            )
+
+            # Plot-Beschriftung je nach 'var' (genau wie bei history)
+            if var == "temperature_2m":
+                title = f"Temperatur Vorhersage: {city}"
+                y_label = "°C"
+            elif var == "relative_humidity_2m":
+                title = f"Luftfeuchte Vorhersage: {city}"
+                y_label = "%"
+            elif var == "wind_speed_10m":
+                title = f"Windgeschwindigkeit Vorhersage: {city}"
+                y_label = "km/h"
+            else:
+                title = f"Forecast: {city} ({var})"
+                y_label = var
+
+            # Erstellen des Plots
+            png = build_single_forecast_plot_png(df, var, title, y_label)
+
+            if png is None:
+                return jsonify({"error": "Keine Plot-Daten für Forecast verfügbar"}), 503
+            
+            return send_file(
+                BytesIO(png),
+                mimetype="image/png",
+                as_attachment=False,
+                download_name="forecast.png"
+            )
+
+
     # ========================================
     # SOCKET → erhält (neue) Stadt vom Frontend
     # ========================================
@@ -322,11 +479,11 @@ class WeatherDashboard:
 
             # ===== 3) ERFOLG -> STADT ÜBERNEHMEN =====
 
-            logger.info(f"✅ Stadtwechsel erfolgreich: '{self. city}' → '{new_city_str}'") # Erst hier die Stadt wirklich übernommen, wenn sie auch gefunden wurde
+            logger.info(f"✅ Stadtwechsel erfolgreich: '{self.city}' → '{new_city_str}'") # Erst hier die Stadt wirklich übernommen, wenn sie auch gefunden wurde
 
             self.city = new_city_str
             self.weather_data = updated_data
-            self.last_polled = datetime.utcnow()
+            self.last_polled = datetime.now(timezone.utc)   #Vorher Julian: datetime.utcnow()
 
 
             # ===== 4) KARTE GENERIEREN =====
@@ -404,7 +561,7 @@ class WeatherDashboard:
         # Dann setzen der internen Variablen
         self.city = city_clean
         self.weather_data = data
-        self.last_polled = datetime.utcnow()
+        self.last_polled = datetime.now(timezone.utc)   # Test Julian veraltet: datetime.utcnow()
 
         # Karte erstellen
         lat, lon = self.fetch_coordinates(self.city)
