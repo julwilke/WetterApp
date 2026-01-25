@@ -56,6 +56,7 @@ def fetch_openmeteo_forecast_dataframe(lat, lon, days=7):
 
     except Exception:
         logger.info("Anfrage für Forecast-Daten fehlgeschlagen!")
+        return None
 
     # Stundenbasis bilden, bei Fehler return 'None'
     hourly = raw.get("hourly", None)

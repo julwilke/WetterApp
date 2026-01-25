@@ -10,12 +10,13 @@ import logging
 def configure_logging(level: int = logging.INFO) -> None:
     """
     Richtet die grundlegende Logging-Konfiguration ein.
+    Log-Level wird ausschließlich über .env-Datei festgelegt.
 
-    Args:
+    Argumente:
         level: Minimale Log-Level-Schwelle (z.B. logging.INFO, logging.DEBUG,... einstellbar im .env)
     """
     
-    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper() # CAPS falsch im .env falsch eingetragen, und Default auf 'INFO'
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()      # Groß-/Kleinschreibung aus .env normalisieren
     
     log_level = getattr(logging, log_level_str, logging.INFO)
 

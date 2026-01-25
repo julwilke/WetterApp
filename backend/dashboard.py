@@ -17,6 +17,7 @@ Aufgaben:
 import os
 import logging
 
+# Brauche ich die hier überhaupt? 
 import matplotlib
 matplotlib.use("Agg") # Server ohne Display
 import matplotlib.pyplot as plt
