@@ -28,7 +28,7 @@ oder nur diese Datei:
 
 from __future__ import annotations
 
-# ✅ FIX: Damit "from cli.cli import ..." sicher funktioniert (Windows/VSCode/pytest),
+# FIX: Damit "from cli.cli import ..." sicher funktioniert (Windows/VSCode/pytest),
 # wird Projekt-Root in sys.path eingefügt.
 import sys
 from pathlib import Path
@@ -44,7 +44,7 @@ from typing import Any
 
 import pytest
 
-# ✅ Import aus der cli.py Projekt:
+# Import aus der cli.py Projekt:
 # cli ist ein Paket (weil cli/__init__.py existiert)
 from cli.cli import (
     parse_weather_data,
