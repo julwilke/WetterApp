@@ -17,10 +17,11 @@
 
 Die **WetterApp** ist eine Web-Anwendung, die Wetterdaten abruft und visualisiert:
 
-- **API-Calls** sorgen für die Datengrundlage (Aktual: OpenWeatherMap, Historisch: OpenMeteo)
+- **API-Calls** sorgen für die Datengrundlage (Aktual: OpenWeatherMap, Historisch & Vorhersage: OpenMeteo)
 - **Interaktive Karte** zeigt die aktuelle Stadt mit Temperatur-Pin (`Folium`)
 - **Echtzeit-Updates** über WebSockets (``Socket.IO``)
-- **Historische Verlaufsansicht** mit serverseitig gerenderten Matplotlib-Plots (Open-Meteo Archive)
+- **Historische Verlaufsansicht** mit serverseitig gerenderten Plots
+- **Wettervorhersage** mit serverseitig gerenderten Plots
 - **Flexible Datenquellen**: CSV-Dateien oder externe APIs (z. B. OpenWeather)
 - **Responsives Design** über ``Bootstrap``
 - **Modulare Backend-Architektur** für einfache Erweiterungen bei gleichbleibenden Schnittstellen
