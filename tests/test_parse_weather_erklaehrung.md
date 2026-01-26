@@ -1,71 +1,60 @@
-# Erklärung zu tests/test_parse_weather.py
+# README – WetterApp CLI + Tests
 
-# TODO: fertig machen auf aktuelles Programm test_parse_weather_erklaehrung.py
+## Überblick
+In diesem Teilprojekt habe ich ein CLI-Tool entwickelt, das Wetterdaten entweder aus einer CSV-Datei oder direkt über die OpenWeather API auslesen kann.  
+Die Ausgabe kann als Text oder JSON erfolgen und die Ergebnisse können optional in eine Log-CSV-Datei geschrieben werden.
 
-Kurz: Diese Markdown‑Datei erklärt, was `tests/test_parse_weather.py` prüft, wie du die Tests lokal ausführst und welche Voraussetzungen erfüllt sein müssen.
+Zusätzlich habe ich Unit-Tests geschrieben, die sicherstellen, dass Parsing, Ausgabeformatierung und Logging stabil funktionieren.
 
-## Zweck der Tests
-- Validiert die Kernfunktionen der CLI‑Logik ohne echte Netzwerkanfragen.
-- Schwerpunkte:
-  - `parse_weather_data` — extrahiert Felder aus einer API‑Antwort.
-  - `display_weather` — erzeugt menschenlesbare Ausgabe auf stdout.
-  - `log_to_csv` — legt eine CSV-Datei an (inkl. Header) und hängt eine Datenzeile an.
+---
 
-## Wo liegt die Testdatei
-- Pfad: `tests/test_parse_weather.py`
+## Features der CLI (`cli/cli.py`)
 
-## Was genau getestet wird
-1. `test_parse_weather_full`
-   - Nutzt eine vollständige Beispielantwort.
-   - Erwartet: Ort (`name`), Temperatur (`main.temp`), Luftfeuchte (`main.humidity`), Beschreibung (`weather[0].description`) und ein gültiges `raw` JSON‑String.
+### ✅ Unterstützte Datenquellen
 
-2. `test_parse_weather_missing_fields`
-   - Nutzt eine abgespeckte Beispielantwort (ohne `name`, ohne `temp`, leeres `weather`).
-   - Erwartet: keine Exceptions; fehlende Felder → `None`; vorhandene Felder bleiben erhalten.
+#### 1) CSV-Modus
+- Wetterdaten werden aus einer CSV gelesen  
+- entweder über `--file <datei.csv>` oder per stdin (Pipe)
 
-3. `test_display_weather_outputs_readable_text`
-   - Übergibt ein bereits geparstes Dict an `display_weather`.
-   - Prüft: formatierte Ausgabe (z. B. Temperatur mit einer Dezimalstelle, Ort, Luftfeuchte, Beschreibung).
+#### 2) API-Modus (OpenWeather)
+- Abruf aktueller Wetterdaten über Stadtname (`--ow-city`)  
+- API-Key kann per `--ow-key` oder Umgebungsvariable `OPENWEATHER_API_KEY` gesetzt werden
 
-4. `test_log_to_csv_creates_file_and_writes_header_and_row`
-   - Nutzt `tmp_path` (pytest) für einen temporären Ordner.
-   - Prüft: Datei existiert, Header entspricht erwarteter Spaltenliste, mindestens eine Datenzeile vorhanden.
+---
 
-## Voraussetzungen
-- `weather_cli.py` muss importierbar sein (Wrapper im Repo‑Root oder direkte Implementierung).
-  - Wenn die Implementierung in `cli/` liegt, sorgt der Wrapper `weather_cli.py` im Repo‑Root dafür, dass `from weather_cli import ...` funktioniert.
-  - Alternativ: passe die Importzeile in der Testdatei an (`from cli.weather_cli import ...`).
-- Python 3.x und `pytest` installiert (z. B. `python -m pip install pytest`).
-- Keine API‑Keys nötig — Tests verwenden statische Beispiel‑Daten.
+### ✅ Unterstützte Felder
+Die CLI kann u.a. folgende Felder anzeigen und loggen:
 
-## Tests ausführen (lokal)
-1. Virtuelle Umgebung (empfohlen):
-   - python -m venv .venv
-   - Windows PowerShell: & ".\.venv\Scripts\Activate.ps1"
-   - macOS / Linux: source .venv/bin/activate
+- `date`
+- `city`
+- `temp`
+- `description`
+- `precipitation`
+- `wind`
+- `humidity`
+- `pressure`
+- `clouds`
 
-2. Abhängigkeiten:
-   - python -m pip install --upgrade pip
-   - python -m pip install pytest
+Standardmäßig werden alle ausgegeben, aber man kann sie mit `--fields` einschränken.
 
-3. Testlauf:
-   - Im Repo‑Root: python -m pytest -q
-   - Nur diese Datei: python -m pytest -q tests/test_parse_weather.py
+---
 
-## Troubleshooting
-- ModuleNotFoundError: No module named 'weather_cli'
-  - Stelle sicher, dass `weather_cli.py` im Repo‑Root liegt oder passe die Importpfade.
-  - Prüfe, ob du `pytest` aus dem Repo‑Root startest (damit das aktuelle Verzeichnis im PYTHONPATH ist).
+### ✅ Ausgabeformate
+- `--format text` *(Standard)*
+- `--format json`
 
-- Dateikonflikte beim Verschieben von Tests
-  - Falls du eine verschachtelte `tests/tests/` hattest: verschiebe Dateien in `tests/` und entferne den leeren inneren Ordner.
-  - Prüfe mit `git status` vor dem Commit.
+---
 
-## Empfehlung für Commit‑Message (kurz)
-- "Add/Update tests/test_parse_weather.py — unit tests for parser, display and CSV logging"
+### ✅ Logging
+Mit `--log <datei.csv>` können die Daten in eine CSV-Datei geschrieben werden.  
+Die Datei bekommt automatisch einen Header, falls sie noch nicht existiert.
 
-## Weiteres
-- Du kannst Tests erweitern:
-  - Mocking von `fetch_current_weather` (z. B. `responses` oder `requests-mock`), um API‑Fehler zu simulieren.
-  - CLI‑argument tests mit `monkeypatch` auf `sys.argv`.
-- Wenn du willst, passe ich die Test‑Imports an eure Ordnerstruktur oder erstelle den Wrapper automatisch — sag Bescheid.
+Optional kann man mit `--only-log` festlegen, dass nichts auf stdout ausgegeben wird.
+
+---
+
+## Beispiel-Aufrufe
+
+### CSV-Datei lesen
+```bash
+python cli/cli.py --file sample.csv
