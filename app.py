@@ -1,10 +1,9 @@
 ##############################################
-#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.2  #
+#   🌦 WETTER-DASHBOARD – APP STARTER 1.0.5  #
 ##############################################
 
-__version__ = "1.0.2"
+__version__ = "1.0.5"
 
-#Docstring mit Minimalbeschreibung
 """
 WetterApp - Backend Entry Point
 --------------------------------
@@ -40,7 +39,6 @@ def main():
     
     # ===== 1) .ENV DATEI LADEN (API-KEYS ETC.) =====
     load_dotenv() 
-
 
 
     # ===== 2) LOGGING STARTEN UND STARTKONTEXT LOGGEN =====

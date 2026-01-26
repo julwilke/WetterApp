@@ -1,5 +1,5 @@
 ###############################################
-#   🌦 WETTER-DASHBOARD – BACKEND 1.0.4       #
+#   🌦 WETTER-DASHBOARD – BACKEND 1.0.5       #
 ###############################################
 
 """ 
@@ -77,7 +77,7 @@ class WeatherDashboard:
         #Geolocator Client bauen, später über Nominatim Städte zu Koordinaten auflösen
         self.geolocator = Nominatim(user_agent="weather_dashboard")
 
-        #J: Neu hinzugefügt für bessere Modularisierung
+        # Aufruf der Hilfsfunktionen
         self.define_routes()
         self.define_socket_events()
 
@@ -85,7 +85,7 @@ class WeatherDashboard:
     # ROUTES → Frontend API
     # ========================================
 
-    #J: Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
+    #Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
 
     def define_routes(self):
         """
@@ -230,13 +230,13 @@ class WeatherDashboard:
             response = {        
                 "city": self.city,        
                 "lat": lat,
-                "lon": lon,
-                                    #"lastPolled": (self.last_polled.isoformat() + "Z") if self.last_polled else None, # Zeitstempel der letzten ERFOLGREICHEN Abfrage
-                "lastPolled": self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None #Test Julian s.o.
+                "lon": lon,                                    
+                "lastPolled": self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None
             }
 
             # Damit History im Frontend nicht crasht, aber zumindest leer übergeben wird. Kann erweitert werden
             # Frontend erwartet '_history' - Werte im response
+            # Alter Code aber Frontend erwartet den Teil in dem "normalen" Wetter-JSON der Aktualdaten
             response.update({
                 "currentTemperature_history": [],
                 "humidity_history": [],
@@ -247,8 +247,7 @@ class WeatherDashboard:
             if isinstance(self.weather_data, dict):
                 response.update(self.weather_data)
 
-            else:
-                # Sollte eigentlich abgefangen sein, nur zur Sicherheit ^^
+            else:                                
                 logger.error("/weather: weather_data ist nicht verfügbar/kein dict")
                 return jsonify({
                     "city": self.city,
@@ -269,7 +268,7 @@ class WeatherDashboard:
             Standard: letzte 2 Tage, UTC.
             """
 
-            # Welche Variable wollen wir plotten?
+            # Welche Variable soll geplottet werden?
             var = request.args.get("var", "temperature_2m")
 
             # Zeitraum in Tagen
@@ -339,7 +338,7 @@ class WeatherDashboard:
             Standard: nächste 7 Tage, UTC.
             """
 
-            # Welche Variable wollen wir plotten?
+            # Welche Variable soll geplottet werden?
             var = request.args.get("var", "temperature_2m")
 
             # Zeitraum in Tagen
@@ -452,10 +451,8 @@ class WeatherDashboard:
 
             # ===== 2) NEUE STADT versuchen =====
 
-            logger.info(f"🌍 Versuche Stadtwechsel → '{new_city_str}' (vorher: '{self.city}')")
-            # VERALTET -> 'self.city = new_city_str' -> J: Nach unten in 3) verschoben weil: Wenn ich die Stadt önder steht oben IMMER ne neue Stadt im Dashboard, die karten und werte werden nur aktualisiert, wenn auch vorhadnen und geprüft.
-            # jetzt wird auch oben der Name erst aktualisiert, wenn wirklich eine neue Stadt übernommen wurde
-
+            logger.info(f"🌍 Versuche Stadtwechsel → '{new_city_str}' (vorher: '{self.city}')")          
+            
             # Sofort Wetter versuchen abzuholen
             updated_data = self.provider.get_weather_for_city(new_city_str) # hier jetzt new_city_str
 
@@ -476,7 +473,7 @@ class WeatherDashboard:
 
             self.city = new_city_str
             self.weather_data = updated_data
-            self.last_polled = datetime.now(timezone.utc)   #Vorher Julian: datetime.utcnow()
+            self.last_polled = datetime.now(timezone.utc)   
 
 
             # ===== 4) KARTE GENERIEREN =====
@@ -525,7 +522,7 @@ class WeatherDashboard:
         - setzt self.last_polled
         """
 
-        #Stadt-String sauber machen
+        # Stadt-String sauber machen
         if city is None:
             city_clean = ""
         else:
@@ -554,7 +551,7 @@ class WeatherDashboard:
         # Dann setzen der internen Variablen
         self.city = city_clean
         self.weather_data = data
-        self.last_polled = datetime.now(timezone.utc)   # Test Julian veraltet: datetime.utcnow()
+        self.last_polled = datetime.now(timezone.utc)  
 
         # Karte erstellen
         lat, lon = self.fetch_coordinates(self.city)

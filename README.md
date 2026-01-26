@@ -1,7 +1,7 @@
 <h1 align="center">🌦️ WetterApp</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.4-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-1.0.5-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/status-stable-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>
@@ -161,14 +161,16 @@ WetterApp/
 
 | Package | Verwendung |
 |---------|------------|
+| **python-dotenv** | Laden von Umgebungsvariablen aus `.env` |
 | **Flask** | Web-Framework für HTTP-Routen und Template-Rendering |
 | **Flask-SocketIO** | WebSocket-Unterstützung für Echtzeit-Updates |
-| **Pandas** |  CSV-Datenverarbeitung und Filterung |
-| **Folium** |  Generierung interaktiver Leaflet-Karten |
-| **Geopy** |  Geocoding (Stadtname → GPS-Koordinaten) |
-| **python-dotenv** | Laden von Umgebungsvariablen aus `.env` |
 | **requests** |  HTTP-Client für API-Calls (API-Provider vorbereitet) |
+| **Geopy** |  Geocoding (Stadtname → GPS-Koordinaten) |
+| **Folium** |  Generierung interaktiver Leaflet-Karten |
+| **Pandas** |  CSV-Datenverarbeitung und Filterung |
 | **Matplotlib**  | Serverseitige Erzeugung von Verlaufsdiagrammen |
+| **pytest**   | Für automatisierte Tests der CLI-Version |
+| **numpy** | NP-Datentypen
 
 ## Frontend
 
@@ -200,8 +202,8 @@ WetterApp/
 ## 📄 License
 
 AGPLv3 — see LICENSE file for full terms.
-© 2025 (PKI Gruppe B1-3)
+© 2026 (PKI Gruppe B1-3)
 
 ---
 
-**Letzte Aktualisierung**: 14.01.2026
+**Letzte Aktualisierung**: 26.01.2026

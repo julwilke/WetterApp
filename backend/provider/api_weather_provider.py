@@ -23,10 +23,8 @@ from backend.services import data_normalizer
 # Logger für dieses Modul
 logger = logging.getLogger(__name__)
 
-# ============================================
-#   API WEATHER PROVIDER
-# ============================================
 
+# ===== KLASSE ERSTELLEN =====
 class APIWeatherProvider:
     """
     Ruft Wetterdaten LIVE von OpenWeatherMap ab
@@ -157,20 +155,16 @@ class APIWeatherProvider:
         normalized_data = data_normalizer.normalize_weather_data(flat_raw)
 
         logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST
-        # ---------------------------------------------
-        # 7️⃣ Metadaten ergänzen
-        # ---------------------------------------------
+       
+       
+        # ===== 7️) META-DATEN ERGÄNZEN =====      
         
-       # normalized_data["lastUpdated"] = datetime.utcnow().isoformat() + "Z"                               #Test, laut VSCode veraltete Schreibweise
         normalized_data["lastUpdated"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")      #Test, neu s.o.
 
-        logger.debug(f"NORMALIZED DATA: {normalized_data}") # JULIAN TEST DEBUG
+        logger.debug(f"API REQUEST NORMALIZED DATA: {normalized_data}") 
 
         logger.info(f"✅ Wetterdaten für '{city_clean}' erfolgreich von API geladen.")
 
-        # ---------------------------------------------
-        # 8️⃣ Rückgabe
-        # ---------------------------------------------
-
+        # ===== 8) RÜCKGABE
         return normalized_data
 
