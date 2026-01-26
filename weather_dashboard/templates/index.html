@@ -1,5 +1,5 @@
 <!-- ============================= -->
-<!-- index.html MAINPAGE v.1.0.4   -->
+<!-- index.html MAINPAGE   1.0.5   -->
 <!-- ============================= -->
 
 <!DOCTYPE html>
@@ -31,19 +31,7 @@
                 </a>
                 <!-- main menu: list of nav items (each has a .nav-link) -->
                 <ul class="navbar-nav text-light" id="accordionSidebar">
-                    <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>
-                    <!-- Verlaufsseite als Modal/Overlay-->
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="navHistory">
-                            <i class="fas fa-table"></i><span>Verlauf</span>
-                        </a>
-                        </li>
-
-                        <li class="nav-item">
-                        <a class="nav-link" href="#" id="navForecast">
-                            <i class="fas fa-chart-line"></i><span>Forecast</span>
-                        </a>
-                        </li>
+                    <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>                    
                 </ul>
                 <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
             </div>
@@ -78,7 +66,7 @@
                 <div class="container-fluid">
                     <!-- Page heading + small action button on the right -->
                     <div class="d-sm-flex justify-content-between align-items-center mb-4">
-                        <h3 class="mb-0" id="cityDisplay">--</h3><a class="btn btn-primary btn-sm d-none d-sm-inline-block" role="button" href="#"><i class="fas fa-download fa-sm text-white-50"></i>&nbsp;Wetterbericht herunterladen</a>
+                        <h3 class="mb-0" id="cityDisplay">--</h3>
                     </div>
 
                     <div id="dashboard" class="row">
@@ -428,6 +416,9 @@
                 
                 if (v == 'customLargeBlock' || v == 'map' || v == 'sunArc') return; // s.o.: Damit diese drei nicht auch history und forecast laden
 
+                // Nur Kacheln öffnen, für die du Timeseries angebunden hast
+                if (!timeseriesEnabled.has(v)) return;
+
                 openHistoryAndForecast(v); 
             });
 
@@ -505,7 +496,7 @@
         // - Browser lädt die Bilder:
         //  - /history_plot.png... 
         //  - /forecast_plot.png...
-        // TODO: Noch ist vieles nach history benannt. Später besser mit Forecast ersetzen/ergänzen oder neutrales Wort für beides. Noch nicht geschehen da dann auch JavaScript umgebaut werden muss 
+         
 
 
         //heißt noch history, ist aber auch forecast
@@ -514,6 +505,7 @@
         const historyList = document.getElementById('historyList');
         const historyTitle = document.getElementById('historyTitle');
         const historyClose = document.getElementById('historyClose');
+        const historyReload = document.getElementById('historyReload')
 
         // ======================================================================
         // Mapping der Frontend-Card -> OpenMeteo Variable (Benannt wie im Backend!)
@@ -603,8 +595,8 @@
 
                 // ===== 1) HISTORY =====
                 
-                 const hTitle = makeSectionTitle("Vergangenheit");        
-                const historyImg = makePlotImage('History Plot: ${label}');    
+                const hTitle = makeSectionTitle("Vergangenheit");        
+                const historyImg = makePlotImage(`History Plot: ${label}`);    
                 
                 // Bild reinladen
                 historyImg.src =
@@ -659,15 +651,14 @@
                 historyOverlay.classList.remove("history-hidden");
                 historyOverlay.classList.add("history-show");
             }
-            }
-
-            // Reload Button einmalig für beide
-            if (historyReload) {
-            historyReload.addEventListener("click", () => {
-                if (lastCardVar) openHistoryAndForecast(lastCardVar);
-            });
-            }
-
+            }           
+           
+        // Reload Button einmalig für beide
+        if (historyReload) {
+        historyReload.addEventListener("click", () => {
+            if (lastCardVar) openHistoryAndForecast(lastCardVar);
+        });
+        }
 
         // Modal wieder schließen
         function closeHistory() {

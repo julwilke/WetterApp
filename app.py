@@ -68,10 +68,7 @@ def main():
     # ===== 4) DASHBOARD BACKEND INITIALISIEREN UND STARTEN =====
     app = WeatherDashboard(provider = provider)             # Initialsieren
     app.run(city="Berlin")                                  # Server starten             
-
-    # ===== 4) DASHBOARD BACKEND INITIALISIEREN UND STARTEN =====
-    app = WeatherDashboard(provider = provider)             # Initialsieren
-    app.run(city="Berlin")                                  # Server starten             
+        
 
 # ============================================
 #   ===== SCRIPT START (Entry-Point) =====
