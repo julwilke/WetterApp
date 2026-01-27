@@ -1,4 +1,0 @@
-CITY,key,t,value
-Berlin,currentTemperature_history,2026-01-12T00:00:00Z,4.1
-Berlin,currentTemperature_history,2026-01-12T01:00:00Z,4.3
-Berlin,humidity_history,2026-01-12T00:00:00Z,82

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class CSVWeatherProvider:
     """ Liest Wetterdaten aus einer CSV-Datei, normalisiert sie und stellt sie bereit. """
 
-    def __init__(self, filename="weather_sample.csv"): #J: Hier nicht den Pfad, sondern den Dateinamen nehmen 'filename'
+    def __init__(self, filename="weather_sample.csv"): 
         """Initialisiert den CSVWeatherProvider mit dem Pfad zur CSV-Datei"""      
 
         # Ordner, in dem dieses Skript liegt /WetterApp/backend

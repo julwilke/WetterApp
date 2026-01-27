@@ -48,10 +48,8 @@ WetterApp/
 │
 ├── cli/
 │   ├── __init__.py
-│   └── cli.py
-│
-└── tests/
-    └── test_parse_weather.py
+│   ├── cli.py
+│   └── test_parse_weather.py
 ```
 
 ---
@@ -68,7 +66,7 @@ WetterApp/
 ### ✅ 1) CSV-Datei einlesen und Ausgabe im Terminal
 
 ```bash
-python cli/cli.py --file sample.csv
+python -m cli.cli --file cli/sample.csv
 ```
 
 Beispiel-Ausgabe:
@@ -82,7 +80,7 @@ Beispiel-Ausgabe:
 ### ✅ 2) Nur bestimmte Felder ausgeben
 
 ```bash
-python cli/cli.py --file sample.csv --fields date,city,temp,description
+python -m cli.cli --file cli/sample.csv --fields date,city,temp,description
 ```
 
 ---
@@ -90,7 +88,7 @@ python cli/cli.py --file sample.csv --fields date,city,temp,description
 ### ✅ 3) Ausgabe als JSON
 
 ```bash
-python cli/cli.py --file sample.csv --format json
+python -m cli.cli --file cli/sample.csv --format json
 ```
 
 Hier wird ein JSON-Array ausgegeben (Liste von Zeilen-Objekten).
@@ -102,7 +100,8 @@ Hier wird ein JSON-Array ausgegeben (Liste von Zeilen-Objekten).
 ### ✅ 4) Daten in eine Logdatei schreiben
 
 ```bash
-python cli/cli.py --file sample.csv --log logged.csv
+python -m cli.cli --file cli/sample.csv --log cli/logged.csv    # Für Sample -> CSV
+python -m cli.cli --ow-city Berlin --log cli/logged.csv         # Für API -> CSV
 ```
 
 Wichtig:
@@ -116,7 +115,7 @@ Wichtig:
 ### ✅ 5) Nur loggen (keine Terminalausgabe)
 
 ```bash
-python cli/cli.py --file sample.csv --log logged.csv --only-log
+python -m cli.cli --file cli/sample.csv --log cli/logged.csv --only-log
 ```
 
 ---
@@ -126,7 +125,7 @@ python cli/cli.py --file sample.csv --log logged.csv --only-log
 ### ✅ 6) Live-Wetter abrufen
 
 ```bash
-python cli/cli.py --ow-city Berlin --ow-key "DEIN_API_KEY"
+python -m cli.cli --ow-city Berlin --ow-key "DEIN_API_KEY"
 ```
 
 ---
@@ -134,7 +133,7 @@ python cli/cli.py --ow-city Berlin --ow-key "DEIN_API_KEY"
 ### ✅ 7) API Abruf + Logging
 
 ```bash
-python cli/cli.py --ow-city Berlin --ow-key "DEIN_API_KEY" --log logged.csv
+python -m cli.cli --ow-city Berlin --ow-key "DEIN_API_KEY" --log cli/logged.csv
 ```
 
 ---
@@ -145,7 +144,7 @@ Damit man den API-Key nicht jedes Mal eintippen muss:
 
 ```powershell
 $env:OPENWEATHER_API_KEY="DEIN_API_KEY"
-python cli/cli.py --ow-city Berlin
+python -m cli.cli --ow-city Berlin
 ```
 
 ---

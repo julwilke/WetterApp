@@ -106,18 +106,28 @@ python app.py
 (läuft dann unter: http://127.0.0.1:5000)
 ```
 
-### Alternative/Debug: CLI-Version mit API der WetterApp
+### CLI-Starten
 
 ```bash
-# CLI-Version starten
+# Für API-Tests und Development
 
-#Für sample Daten
-python -m cli.cli --ow-city Berlin 
+# Starten mit sample Daten aus "sample.csv"
+python -m cli.cli --file cli/sample.csv
 
 # Für API-Abfrage
 $env:OPENWEATHER_API_KEY="DEIN_KEY_HIER"   
 python -m cli.cli --ow-city Berlin
+
+# API-Abfrage inklusive Datenexport -> .csv
+python -m cli.cli --ow-city Berlin --log cli/LOG_NAME.csv
 ```
+
+### Automatisierte PyTests für CLI-Version
+```bash
+# PyTest ausführen
+pytest cli/test_parse_weather.py
+```
+
 
 # 🏗 Architektur (Kern)
 
@@ -186,7 +196,7 @@ WetterApp/
 
 ## Entwicklung & Tools
 
-- **Python** 3.9+
+- **Python** 3.10+
 - **pip** 
 - **Virtual Environment** (venv) 
 
@@ -195,10 +205,13 @@ WetterApp/
 
 ### PKI- Projektgruppe B1-3
 
-- Adham
-- Tugba
-- Nick-Andre
-- Julian
+Alle Projektmitglieder haben gemeinsam an Konzeption, Abstimmung und Integration der Anwendung gearbeitet.
+Für die Präsentation und zur besseren fachlichen Zuordnung wurden dennoch folgende Themenschwerpunkte festgelegt:
+
+- Adham - Weather Provider & API-Anbindung
+- Tugba - CLI-Tooling & automatisierte Tests
+- Nick-Andre - Frontend & Benutzeroberfläche
+- Julian - Backend-Architektur & Datenverarbeitung
 
 ## 📄 License
 

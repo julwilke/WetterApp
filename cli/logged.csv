@@ -2,3 +2,8 @@ date,city,temp,description,precipitation,wind_speed,wind_deg,humidity,pressure,c
 2025-12-10T17:17:42Z,Berlin,11.51,Leichter Regen,0.25,3.6,240,93,1019,0
 2025-12-10T17:21:39Z,Lüdenscheid,9.61,Bedeckt,,0.89,184,94,1020,100
 2025-12-10T19:15:31Z,Lüdenscheid,9.59,Bedeckt,,4.19,242,94,1021,100
+2025-12-09,Berlin,5,leicht bewölkt,,,,,,
+2025-12-10,Hamburg,6,sonnig,,,,,,
+2026-01-27T21:05:30Z,Berlin,-0.09,Bedeckt,,2.24,129,92,1002,100
+2025-12-09,Berlin,5,leicht bewölkt,,,,,,
+2025-12-10,Hamburg,6,sonnig,,,,,,

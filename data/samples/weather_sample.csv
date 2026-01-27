@@ -1,6 +1,8 @@
-CITY,TEMPERATURE
-Berlin,12
-Hamburg,8
-München,10
-Köln,11
-Stuttgart,9
+CITY,TEMPERATURE,humidity,pressure,weatherDescription,windSpeed,windDirection,cloudCoverage,feelsLike,tempMin,tempMax,sunrise,sunset
+Berlin,30,20,1000,klar,3.5,220,30,32,20,33,06:30,18:30
+Iserlohn,11,82,1011,bewölkt,2.8,210,65,10,8,13,06:35,18:25
+München,9,70,1013,klar,3.1,120,15,8,6,12,06:40,18:20
+Köln,12,75,1008,bewölkt,4.5,240,55,11,9,14,06:38,18:28
+Stuttgart,10,68,1012,klar,1.9,90,20,9,7,13,06:36,18:26
+Shanghai,18,85,1006,dunstig,3.6,160,70,17,15,21,05:55,18:10
+London,10,80,1009,regen,5.2,260,85,9,7,12,06:45,18:30
