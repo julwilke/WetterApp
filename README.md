@@ -1,7 +1,7 @@
 <h1 align="center">🌦️ WetterApp</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.5-blue?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/version-1.0.6-blue?style=for-the-badge" />
   <img src="https://img.shields.io/badge/status-stable-green?style=for-the-badge" />
   <img src="https://img.shields.io/badge/PKI-B_3_1-orange?style=for-the-badge" />
 </p>

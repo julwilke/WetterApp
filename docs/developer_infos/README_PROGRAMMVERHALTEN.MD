@@ -57,4 +57,5 @@
 - Wetterdaten als Kacheln
 - Karte: Folium-Map mit Temperatur Marker
 - Verlauf & Prognose: Matplotlibs als PNG
+  - Symbol in rechter oberer Ecke der jeweiligen Kachel zeigt an, dass History/Forecast-Daten vorhanden sind
 - Frontend lädt aktualisierung automatisch dynamisch nach
