@@ -208,10 +208,28 @@ WetterApp/
 Alle Projektmitglieder haben gemeinsam an Konzeption, Abstimmung und Integration der Anwendung gearbeitet.
 Für die Präsentation und zur besseren fachlichen Zuordnung wurden dennoch folgende Themenschwerpunkte festgelegt:
 
-- Adham - Weather Provider & API-Anbindung
-- Tugba - CLI-Tooling & automatisierte Tests
-- Nick-Andre - Frontend & Benutzeroberfläche
-- Julian - Backend-Architektur & Datenverarbeitung
+- Adham E.M. - Weather Provider & API-Anbindung
+- Tugba A. - CLI-Tooling & automatisierte Tests
+- Nick-Andre B. - Frontend & Benutzeroberfläche
+- Julian W. - Backend-Architektur & Datenverarbeitung
+
+## Einsatz von KI-Werkzeugen
+Im Rahmen dieses Projekts war die Nutzung von KI-Werkzeugen (Chatbots, IDE-Integrationen) explizit erlaubt.
+Diese wurden gezielt als Assistenz eingesetzt um die eigene Entwicklungsarbeit zu unterstützen.
+
+KI-Werkzeuge wurden insbesondere benutzt für:
+- Diskussion / Bewertung / Validierung von Architektur- und Strukturierungsansätzen (insbesondere nach der initialen Konzeption durch das Projektteam)
+- Refactoring bestehender Code-Abschnitte zur Verbesserung von Lesbarkeit, Wartbarkeit und Konsistenz
+- Identifikation von und Unterstützung bei weiterer möglicher Fehlerquellen (z.B. Exception-Handling, Error-Handling)
+- Unterstützung beim Debugging in konkreten Fehlersituationen
+- Verbesserung der Verständlichkeit größerer Code-Strukturen sowie von Kommentaren und Projektdokumentation
+
+Die Konzeption, Grundarchitektur sowie Auswahl der Module (Backend/Frontend, Dashboard WebApp, Provider-Architektur, CLI, Tests) sowie fachliche und technische Entscheidungen wurden eigenständig getroffen.
+
+Vor der Übernahme der Code-Vorschläge durch KI-Assistenzen, wurden die Codes manuell geprüft, inhaltlich verstanden und an die Projektstruktur sowie Didaktik angepasst.
+
+Als primäres KI-Assistenzwerkzeug wurde ChatGPT eingesetzt.
+Ergänzend wurde die KI-basierte Integration von GitHub-Copilot zur Unterstützung bei Schreibfehlern, kleineren offenen Fehleranfälligkeiten, Stilfragen und repetitiven Schreibarbeiten verwendet.
 
 ## 📄 License
 
@@ -220,4 +238,4 @@ AGPLv3 — see LICENSE file for full terms.
 
 ---
 
-**Letzte Aktualisierung**: 26.01.2026
+**Letzte Aktualisierung**: 28.01.2026
