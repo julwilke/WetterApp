@@ -1,30 +1,38 @@
-/* Global */
+/*
+ * ========================================================
+ * WetterApp Dashboard — Globale Stile
+ * ========================================================
+ * Vollständige Darstellung des Dashboards mit
+ * responsiven Komponenten, dunklem Farbschema und
+ * moderner UI-Architektur.
+ */
+
+/* Globale Einstellungen */
 * { box-sizing: border-box; }
 body {
     margin: 0;
     font-family: Arial, sans-serif;
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a)); /* dark blue gradient */
+    background: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a));
     color: var(--text, #e6eef8);
     align-items: stretch;
 }
 
 h1 { text-align: center; }
 
+/* CSS Custom Properties — Farbschema und Layout */
 :root {
-    /* Blau-Ton Basis und abgestufte Bereiche */
-    --accent-blue: #2b73d0; /* primary accent */
-    /* User requested base background rgb(7,16,34) -> #071022 */
-    --bg-top: rgb(7,16,34);
-    --bg-bottom: rgb(5,10,24);
-    --panel-bg: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a));;
+    --accent-blue: #2b73d0;      /* Primäre Akzentfarbe */
+    --bg-top: rgb(7,16,34);       /* Oberer Gradient Hintergrund */
+    --bg-bottom: rgb(5,10,24);    /* Unterer Gradient Hintergrund */
+    --panel-bg: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a));
     --panel-bg-2: rgb(8,30,52);
-    --sidebar-bg: rgb(9,22,40);
-    --nav-bg: rgb(8,24,44);
-    --text: #e6eef8;
+    --sidebar-bg: rgb(9,22,40);    /* Seitenleisten-Hintergrund */
+    --nav-bg: rgb(8,24,44);        /* Navigationsleisten-Hintergrund */
+    --text: #e6eef8;               /* Standardtextfarbe */
 }
 
-/* Sidebar */
+/* ========== SEITENLEISTE (SIDEBAR) ========== */
 #sidebar {
     width: 220px;
     background: var(--sidebar-bg);
@@ -32,36 +40,41 @@ h1 { text-align: center; }
     padding-top: 10px;
     box-sizing: border-box;
     min-height: 100vh;
-    flex: 0 0 220px; /* Set flex to fixed width for better layout stability */
+    flex: 0 0 220px; /* Feste Breite für bessere Layout-Stabilität */
     position: sticky;
     top: 0;
 }
 #sidebar, .sidebar { width: 220px; }
-/* Sidebar nav links are `.nav-link` within li.nav-item elements */
+
+/* Navigationslinks innerhalb von li.nav-item Elementen */
 #sidebar ul.navbar-nav { padding-left: 0; margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
 #sidebar li.nav-item { width: 100%; }
 #sidebar .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #cbd8e6; text-decoration: none; width: 100%; box-sizing: border-box; font-size: 15px; }
 #sidebar .nav-link:hover { background: #0f2638; }
 #sidebar .nav-link.active { background: #122033; border-left-color: #2b73d0; color: #eaf6ff; font-weight: 700; }
 
-/* Sidebar header */
+/* Seitenleisten-Header mit Icon und App-Name */
 .sidebar-header { display:flex; align-items:center; gap:10px; padding: 16px 18px; font-weight:900; color:#e6eef8; }
 .sidebar-header .app-icon { transform: rotate(0deg); font-size: 22px; color: #ffd93d; margin-right:10px; }
 .sidebar-header .app-name { font-size: 18px; font-weight: 900; }
 .sidebar-brand { padding: 14px 18px; display:flex; align-items:center; gap:8px; border-bottom: none; }
 
-/* Main wrapper */
-#mainWrapper { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 100vh; padding-right: 0; background: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a)); /* dark blue gradient */}
+/* ========== LAYOUT WRAPPER ========== */
+#mainWrapper { 
+    flex: 1 1 auto; display: flex; flex-direction: column; min-height: 100vh; 
+    padding-right: 0; 
+    background: linear-gradient(180deg, var(--bg-top, #071022), var(--bg-bottom, #04121a));
+}
 #wrapper { display: flex; flex-direction: row; align-items: stretch; min-height: 100vh; }
 #content-wrapper { flex: 1 1 auto; display: flex; flex-direction: column; }
 
-/* Navbar */
+/* ========== NAVIGATIONSLEISTE (NAVBAR) ========== */
 #navbar { position: sticky; top: 0; z-index: 1000; height: 56px; background: var(--nav-bg); border-bottom: 1px solid rgba(43,115,208,0.06); display: flex; align-items: center; padding: 0 12px; gap: 12px; width: 100%; left: 0; }
 
 #navbar .container-fluid { width: 100%; padding-left: 16px; padding-right: 16px; display:flex; align-items:center; }
 #navbar .container-fluid .navbar-brand { margin-right: 12px; }
 
-/* topbar specific styling */
+/* Topbar Styling */
 .topbar { background: var(--nav-bg); }
 .topbar .nav-link { color: #e6eef8; }
 #navbar .logo { font-weight: 700; color: #e6eef8; margin-right: 8px; display:flex; gap:8px; align-items:center; }
@@ -69,7 +82,7 @@ h1 { text-align: center; }
 #navbar input[type="text"] { padding: 6px 10px; width: 320px; border: 1px solid #1e2b3b; background: #0b1624; color: #000000; border-radius: 12px; }
 #navbar button { padding: 9px 10px; border-radius: 12px; border: 1px solid #1e2b3b; background: transparent; color: #e6eef8; cursor: pointer; }
 
-/* Dropdown menu */
+/* Dropdown-Menü für Stadt und API-Status */
 #cityHeader { margin-left: 8px; margin-right: 8px; }
 #cityDisplay { font-size: 1.75rem; font-weight: 700; text-align: right; color: #e6eef8; }
 #menuContainer { position: relative; }
@@ -80,21 +93,21 @@ h1 { text-align: center; }
 #menuDropdown .online { color: #4ade80; font-weight: 700; }
 #menuDropdown .offline { color: #fb7185; font-weight: 700; }
 
-/* Content */
+/* ========== INHALT ========== */
 #contentArea, #content { padding: 0; flex: 1 1 auto; min-height: 0; overflow: auto; display:block; margin-top: 0; }
 #headerRow { display:flex; justify-content:flex-end; align-items:center; }
 #cityDisplay { text-align:right; font-weight:700; }
 
-/* Dashboard Grid */
-/* Dashboard: default responsive grid, force 5 columns on large screens */
-/* Dashboard: default responsive grid, force 5 columns on large screens */
+/* ========== DASHBOARD GRID ========== */
+/* Responsives Grid-Layout — automatische Anpassung mit Fallback auf feste Spalten */
 #dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); grid-auto-rows: 1fr; gap: 28px; align-items: stretch; width: 100%; max-width: none; margin: 0; padding: 20px; }
 @media (min-width: 1200px) {
-    /* breite Bildschirme: 5 nebeneinander */
+    /* Breite Bildschirme: 5 Spalten nebeneinander */
     #dashboard { grid-template-columns: repeat(5, minmax(180px, 1fr)); }
 }
 
-/* Card styling */
+/* ========== KARTEN-STYLING ========== */
+/* Wetter-Kacheln mit Farbverlauf, Hover-Effekt und Border */
 .weather-block { background: linear-gradient(rgb(7, 16, 34), rgb(11, 26, 38)); border: none; color: var(--text); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 18px; min-width: 0; min-height: 160px; border-radius: 12px; overflow: hidden; position: relative; transition: transform .12s ease, box-shadow .12s ease; border-left: 6px solid var(--title-bg, var(--accent-blue)); }
 .weather-block:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.25); cursor: pointer; }
 .weather-block .big-icon { position: absolute; top: -12px; right: -48px; font-size: 140px; opacity: 0.08; z-index: 1; pointer-events: none; color: var(--title-bg, var(--accent-blue)); }
@@ -103,9 +116,25 @@ h1 { text-align: center; }
 .weather-block .card-value .value { font-size: clamp(1.6rem, 2.4vw, 3.2rem); line-height: 1; display:inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; position: relative; }
 .weather-block .card-value .unit { opacity: 0.75; font-size: clamp(1.2rem, 1.5vw, 2rem); margin-left: 6px; flex-shrink: 0; }
 
-/* Ensure the entire card content scales and text never overflows the card */
+/* Skalierung und Text-Overflow-Schutz */
 .weather-block, .weather-block * { box-sizing: border-box; }
 .weather-block .card-title, .weather-block .card-value { word-break: normal; }
+
+/* ========== HISTORY-INDIKATOR ICON ========== */
+/* Zeigt an, ob Verlaufsdaten für den Wert verfügbar sind */
+.weather-block .history-indicator {
+    position: absolute;
+    top: 12px;
+    right: 42px;
+    z-index: 4;
+    font-size: 14px;
+    color: #7dd3fc;
+    opacity: 0.8;
+    transition: opacity 200ms ease;
+}
+.weather-block:hover .history-indicator {
+    opacity: 1;
+}
 
 /* small static icon (not the big-bg icon) */
 /* small icon removed per request */

@@ -1,6 +1,11 @@
-<!-- ============================= -->
-<!-- index.html MAINPAGE   1.0.5   -->
-<!-- ============================= -->
+<!--
+ ========================================================
+ WetterApp Dashboard — HTML5 Hauptseite (v1.0.5)
+ ========================================================
+ Responsive Dashboard mit dynamischen Wetter-Kacheln,
+ Verlaufs-Modal und Echtzeit-Updates über SocketIO.
+ ========================================================
+-->
 
 <!DOCTYPE html>
 <html>
@@ -9,97 +14,125 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Dashboard - WetterApp</title>
-    <!-- Bootstrap CSS removed: custom CSS consolidated into /static/styles.css -->
+    
+    <!-- Externe Ressourcen: Google Fonts, FontAwesome Icons, Socket.IO -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous">
+    
+    <!-- Projektspezifische Stile (konsolidiert, Bootstrap entfernt) -->
     <link rel="stylesheet" href="/static/styles.css">
+    
+    <!-- Real-Time Kommunikation mit Backend -->
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 
 <body id="page-top">
     <div id="wrapper">
         <!--
-            Sidebar: left navigation containing the brand and links
-            This is the main entry point for the UI and contains app branding
-            and navigation links to switch pages (Dashboard, History, ...)
-            We intentionally keep styling minimal and responsive.
+         ================================================
+         SEITENLEISTE (SIDEBAR)
+         ================================================
+         Linke Navigation mit Branding und Menü
         -->
         <nav id="sidebar" class="navbar navbar-dark align-items-start sidebar sidebar-dark accordion bg p-0">
             <div class="container-fluid d-flex flex-column p-0"><a class="navbar-brand d-flex justify-content-center align-items-center sidebar-brand m-0" href="#" style="text-decoration: none;">
                     <div class="sidebar-brand-icon rotate-n-15"><i class="fas fa-cloud-sun"></i></div>
                     <div class="sidebar-brand-text mx-3"><span>Wetter-App</span></div>
                 </a>
-                <!-- main menu: list of nav items (each has a .nav-link) -->
+                <!-- Hauptmenü: Navigationslinks -->
                 <ul class="navbar-nav text-light" id="accordionSidebar">
                     <li class="nav-item"><a class="nav-link active" href="/"><i class="fas fa-tachometer-alt"></i><span>Dashboard</span></a></li>                    
                 </ul>
                 <div class="text-center d-none d-md-inline"><button class="btn rounded-circle border-0" id="sidebarToggle" type="button"></button></div>
             </div>
         </nav>
+        
         <div class="d-flex flex-column" id="content-wrapper">
             <div id="content">
+                <!--
+                 ================================================
+                 NAVIGATIONSLEISTE (NAVBAR)
+                 ================================================
+                 Oben: Stadtsuche, API-Status, GitHub-Link
+                -->
                 <nav id="navbar" class="navbar navbar-light navbar-expand shadow mb-4 topbar static-top">
                     <div class="container-fluid">
                         <button class="btn btn-link d-md-none rounded-circle me-3" id="sidebarToggleTop" type="button"><i class="fas fa-bars"></i></button>
+                        
+                        <!-- Suchformular für Stadteingabe -->
                         <form class="d-none d-sm-inline-block me-auto ms-md-3 my-2 my-md-0 mw-100 navbar-search navbar-form" >
                             <div class="input-group"><input id="cityInput" class="bg-light form-control border-0 small" type="text" placeholder="Suche nach Stadt..."><button id="cityButton" class="btn btn-primary" type="button"><i class="fas fa-search"></i></button></div>
                         </form>
+                        
                         <ul class="navbar-nav flex-nowrap ms-auto">
+                            <!-- API-Status Dropdown -->
                             <li class="nav-item dropdown no-arrow mx-1">
                                 <div class="nav-item dropdown no-arrow"><a class="dropdown-toggle nav-link nav-icon no-arrow" aria-expanded="false" data-bs-toggle="dropdown" href="#"><i class="fab fa-cloudscale fa-fw"></i></a>
                                             <div class="dropdown-menu dropdown-menu-end bg-dark border-dark dropdown-list animated--grow-in">
-                                                <h6 class="dropdown-header border-dark menu-header" style="margin-top: 0px; color: white">API Status</h6>
+                                                <h6 class="dropdown-header border-dark menu-header" style="margin-top: 0px; color: white">API-Status</h6>
                                                 <div class="menu-padding">
-                                                    <!-- apiRows is populated dynamically by updateApiStatus() -->
+                                                    <!-- apiRows wird dynamisch durch updateApiStatus() gefüllt -->
                                                     <div id="apiRows" class="api-rows d-flex flex-column" style="gap:10px;">
-                                                        <!-- Populated via JavaScript using /status -> body.apis map -->
+                                                        <!-- Populiert via JavaScript: /status → body.apis -->
                                                     </div>
                                                 </div>
                                             </div>
                                 </div>
                             </li>
+                            <!-- GitHub-Link -->
                             <li class="nav-item dropdown no-arrow"><a class="nav-link nav-icon" href="https://github.com/julwilke/WetterApp" target="_blank"><i class="fab fa-github"></i></a></li>
                         </ul>
                     </div>
                 </nav>
 
                 <div class="container-fluid">
-                    <!-- Page heading + small action button on the right -->
+                    <!-- Seitentitel (Stadtname) -->
                     <div class="d-sm-flex justify-content-between align-items-center mb-4">
                         <h3 class="mb-0" id="cityDisplay">--</h3>
                     </div>
 
+                    <!--
+                     ================================================
+                     DASHBOARD GRID
+                     ================================================
+                     Dynamisch generierte Wetter-Kacheln
+                     Die JavaScript lädt die Kacheln basierend auf der
+                     weatherVars Liste und blockOrder.
+                    -->
                     <div id="dashboard" class="row">
-                        <!-- Cards are injected into this container via client-side JS.
-                             The script dynamically creates a tile per var listed in
-                             the `weatherVars` array (see script below).
-                             Do not hard-code cards in HTML; the script expects to
-                             find and update elements by ID matching the var names. -->
+                        <!-- Kacheln werden via Client-Side JS injiziert -->
                     </div>
-
-                    <!-- additional layout sections could follow (charts etc.) -->
                 </div>
             </div>
+            
+            <!-- Footer -->
             <footer class="sticky-footer">
                 <div class="container my-auto">
                     <div class="text-center my-auto copyright">Copyright © PKI B1-3 WetterApp 2025</div>
                 </div>
             </footer>
-        </div><a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
+        </div>
+        
+        <!-- Scroll-zu-Oben Button -->
+        <a class="border rounded d-inline scroll-to-top" href="#page-top"><i class="fas fa-angle-up"></i></a>
     </div>
    
-    <!-- ========================= -->
-    <!-- HISTORY OVERLAY / MODAL   -->
-    <!-- ========================= -->
-
+    <!--
+     ========================================================
+     VERLAUFS-MODAL (HISTORY/FORECAST OVERLAY)
+     ========================================================
+     Überlagerndes Modal zur Anzeige historischer und
+     prognostizierter Wetterdaten mit Graphiken.
+    -->
     <div id="historyOverlay" class="history-hidden">
       <div id="historyModal">
-
+        <!-- Modal-Header mit Schließen-Button -->
         <div id="historyHeader">
           <strong id="historyTitle">Verlauf</strong>
           <button id="historyClose" type="button">✕</button>
         </div>
 
+        <!-- Steuerelemente: Tage-Eingabe und Reload-Button -->
         <div id="historyControls">
           <label class="history-label">
             Tage:
@@ -110,27 +143,42 @@
           <span id="historyInfo"></span>
         </div>
 
+        <!-- Container für dynamisch geladene Plot-Bilder -->
         <div id="weatherPlot"></div>
-
       </div>
     </div>
 
 
-    <!-- ========================= -->
-    <!-- ===== SKRIPTE =====       -->
-    <!-- ========================= -->
-
-    <!-- keep project scripts and the inline dashboard script intact -->
-    <script src="/static/js/chart.min.js"></script>
+    <!--
+     ========================================================
+     EXTERNE SKRIPTE UND INITIALISIERUNG
+     ========================================================
+    -->
+    
+    <!-- Bootstrap-Initialisierung (Animations, Charts) -->
     <script src="/static/js/bs-init.js"></script>
-    <script src="/static/js/theme.js"></script>
-    <!-- Plotly library and helpers for sun-parabola visualization -->
+    
+    <!-- Plotly-Bibliothek für Sun-Arc Visualisierung -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <!-- Projekt-Logik: Sonnenbahn-Generator und Plot-Hilfsfunktionen -->
     <script src="/static/script.js"></script>
 
-    <script>
+    <!-- Projekt-Logik: Taskbar -->
+    <script src="/static/js/theme.js"></script>
 
-        // Original dashboard script preserved to keep all functions
+    <!--
+     ========================================================
+     INLINE DASHBOARD-SKRIPT
+     ========================================================
+     Hauptlogik für:
+     - Wetter-Kachel-Rendering
+     - SocketIO Echtzeit-Updates
+     - History/Forecast Modal
+     - Drag-and-Drop Neuanordnung
+    -->
+    <script>
+        // Real-Time Kommunikation mit Backend
         const socket = io();
 
         const form = document.querySelector('.navbar-form');
@@ -139,15 +187,11 @@
             cityButton.click();
         });
 
-        // Display order for cards
-        // ------------------------------------------------------------------
-        // This array defines the order and content of dashboard tiles generated
-        // during page initialization. Each key has a label and a mapping to a
-        // visual icon (see `iconMap`) and a unit (see `unitMap`). The creation
-        // loop below will render a tile for every entry here.
-        // ------------------------------------------------------------------
-        
-        //...
+        /**
+         * WETTER-VARIABLEN KONFIGURATION
+         * Anzeigereihenfole, Icons, Labels und Einheiten definieren die UI
+         */
+
         const weatherVars = [
             "currentTemperature","feelsLike","map","tempMax","tempMin","sunarc",
             "humidity","pressure","pressureTrend","windSpeed","windGust","windDirection",
@@ -157,7 +201,7 @@
             "pollenCount","fog"
         ];
 
-        // ...
+        // Anzeigereihenfole im Dashboard
         const blockOrder = [
             "currentTemperature",
             "feelsLike",
@@ -190,7 +234,9 @@
             "fog"
         ];
 
-        // Icons für die entsprechenden Cards
+        /**
+         * Icon-Zuordnungen für Wettervariablen (FontAwesome Icons)
+         */
         const iconMap = {
             currentTemperature: 'fa-thermometer-half',
             feelsLike: 'fa-thermometer-half',
@@ -258,7 +304,10 @@
             map: 'Karte'
         };
 
-        // Einheiten für die Werte in den Cards
+        /**
+         * Einheiten für die Wetterwerte
+         * Werden neben dem Wert angezeigt
+         */
         const unitMap = {
             currentTemperature: '°C',
             feelsLike: '°C',
@@ -291,29 +340,48 @@
             fog: ''
         };
 
-        // Farben für die Cards (bunt)
+        /**
+         * Farbpalette für Kachel-Titel (10 unterschiedliche Farben)
+         */
         const colors = [
-            '#ff6b6b', // red
-            '#ffd93d', // yellow
-            '#6bcB77', // green
-            '#6b8cff', // blue
-            '#a368ff', // violet
-            '#ff8b6b', // orange
-            '#42d392', // mint
-            '#7dd3fc', // cyan
-            '#f0a6ff', // pink
-            '#ff8bd1'  // rose
+            '#ff6b6b', // Rot
+            '#ffd93d', // Gelb
+            '#6bcB77', // Grün
+            '#6b8cff', // Blau
+            '#a368ff', // Violett
+            '#ff8b6b', // Orange
+            '#42d392', // Mint
+            '#7dd3fc', // Cyan
+            '#f0a6ff', // Pink
+            '#ff8bd1'  // Rose
         ];
 
-        // Small constants
-        const COMPASS_ICON_OFFSET = 45; // degrees to rotate to account for icon's default orientation
+        /**
+         * Konstanten für UI-Verhalten
+         */
+        const COMPASS_ICON_OFFSET = 45; // Grad zur Ausrichtung des Icons
 
-        // Erstelle Blöcke für alle Variablen
+        // ========== DOM-Elemente und Initalisierung ==========
         const elements = {};
         const dashboard = document.getElementById('dashboard');
         let draggedItem = null;
 
-        // 1️⃣ Normale Variablen außer sunrise/sunset/map
+        /**
+         * Prüfe, ob Variable Zeitreihen-Daten hat
+         * Wird für History-Indikator Icon verwendet
+         */
+        function isTimeseriesVariable(v) {
+            const timeseriesEnabled = new Set([
+                "currentTemperature",
+                "humidity",
+                "windSpeed"
+            ]);
+            return timeseriesEnabled.has(v);
+        }
+
+        /**
+         * Erstelle normale Wetter-Kacheln
+         */
         function createBlock(v, idx) {
             const block = document.createElement('div');
             block.className = 'weather-block';
@@ -325,10 +393,19 @@
             const label = labelMap[v] || v;
             const unit = unitMap[v] || '';
 
+            /**
+             * Verlaufs-Indikator: Zeigt an, ob Zeitreihen-Daten verfügbar sind
+             */
+            const hasHistoryData = isTimeseriesVariable(v);
+            const historyIndicatorHTML = hasHistoryData 
+                ? `<i class="fas fa-history history-indicator" title="Verlaufsdaten verfügbar"></i>` 
+                : '';
+
             if (v === 'windDirection') {
                 block.innerHTML = `
                     <i class="fas ${iconClass} big-icon"></i>
                     <div class="card-title">${label}</div>
+                    ${historyIndicatorHTML}
                     <div class="compass" aria-hidden="true">
                         <img class="compass-img" src="/static/images/458-4582952_360-compass-png-png-download-360-degree-compass.png" alt="compass">
                         <i class="fas fa-location-arrow compass-arrow" id="arrow-${v}" aria-hidden="true"></i>
@@ -340,6 +417,7 @@
                 block.innerHTML = `
                     <i class="fas ${iconClass} big-icon"></i>
                     <div class="card-title">${label}</div>
+                    ${historyIndicatorHTML}
                     <i class="fas fa-grip-lines drag-handle" draggable="true"></i>
                     <div class="card-value"><span id="${v}" class="value">--</span><span class="unit">${unit}</span></div>
                 `;
@@ -350,7 +428,7 @@
             addDragAndClick(block, v);
         }
 
-        // 2️⃣ Großer Map-/Custom-Block
+        // 2️⃣ Große Karte
         function createLargeBlock() {
             const block = document.createElement('div');
             block.className = 'weather-block big-block';
@@ -399,12 +477,16 @@
         }
 
 
-
-        // Hilfsfunktion für Drag & Click - angepasst v1.0.4 damit Sonnenbogen und History/Forecast-Werte nicht gleichzeitig öffnen -> jeder Klick hat openHistoryAndForecast() aufgerufen
+        /**
+         * Drag & Click Handler für Kacheln
+         * - Drag-and-Drop zum Neuordnen
+         * - Klick öffnet History/Forecast Modal
+         */
         function addDragAndClick(block, v) {
             const handle = block.querySelector('.drag-handle');
 
-            // Auswählen, welche Kacheln Werte laden sollen (nur die, für die Forecast und History vorliegt) (außer sonderregel unten für SunArc etc.)
+            // Kacheln mit Verlaufs-/Prognose-Daten
+            // (nur Variablen mit zeitlichen Daten)
             const timeseriesEnabled = new Set([
                 "currentTemperature",
                 "humidity",
@@ -428,18 +510,17 @@
                 e.dataTransfer.effectAllowed = 'move'; 
                 try { e.dataTransfer.setData('text/plain',''); } catch{} 
             });
-
             handle.addEventListener('dragend', (e) => { 
                 draggedItem = null; 
                 block.classList.remove('dragging'); 
             });
         }
 
-
-
-        // ✅ Erzeuge alle Blöcke in blockOrder
+        /**
+         * Alle Kacheln rendern nach blockOrder
+         */
         blockOrder.forEach((v, idx) => {
-            if (v === 'sunrise' || v === 'sunset') return; // handled by Sun Arc Block
+            if (v === 'sunrise' || v === 'sunset') return;
 
             if (v === 'map') {
                 createLargeBlock();
@@ -469,37 +550,37 @@
             const middleX = rect.left + rect.width / 2;
 
             if (e.clientX > middleX) {
-                // Cursor rechts von der Mitte -> nach target einfügen
+                // Cursor rechts von der Mitte → nach target einfügen
                 if (target.nextSibling !== draggedItem) {
                     dashboard.insertBefore(draggedItem, target.nextSibling);
                 }
             } else {
-                // Cursor links von der Mitte -> vor target einfügen
+                // Cursor links von der Mitte → vor target einfügen
                 if (target !== draggedItem.nextSibling) {
                     dashboard.insertBefore(draggedItem, target);
                 }
             }
         });
 
-        // Optional: DragLeave zum Styling
+        // Optional: DragLeave für visuelle Hinweise (TODO: Bei Bedarf aktivieren)
         dashboard.addEventListener('dragleave', (e) => {
-            // hier z.B. hovered class entfernen, wenn du optische Hinweise willst
+            // Beispiel: CSS-Klasse entfernen für optische Rückmeldung
         });
 
 
 
-        // =================================
-        // ===== HISTORY / FORECAST MODAL ===== v1.0.0
-        // =================================
+        /**
+         * ========================================================
+         * VERLAUFS- & PROGNOSE-MODAL (History/Forecast)
+         * ========================================================
+         * Version: 1.0.0
+         * 
+         * Funktionalität:
+         * - Backend liefert MatPlotLib-PNG für Verlauf und Prognose
+         * - Browser lädt dynamisch: /history_plot.png, /forecast_plot.png
+         * - Modal öffnet sich beim Klick auf Zeitreihen-Kacheln
+         */
 
-        // - Backend liefert fertige MatPlotLib-PNG für History und Forecast
-        // - Browser lädt die Bilder:
-        //  - /history_plot.png... 
-        //  - /forecast_plot.png...
-         
-
-
-        //heißt noch history, ist aber auch forecast
         const historyOverlay = document.getElementById('historyOverlay');
         const historyModal = document.getElementById('historyModal');
         const historyList = document.getElementById('historyList');
@@ -507,9 +588,12 @@
         const historyClose = document.getElementById('historyClose');
         const historyReload = document.getElementById('historyReload')
 
-        // ======================================================================
-        // Mapping der Frontend-Card -> OpenMeteo Variable (Benannt wie im Backend!)
-        //=======================================================================
+        /**
+         * ========================================================
+         * Variable Mapping: Frontend → OpenMeteo Backend
+         * ========================================================
+         * Ordnet Wetter-Variablen ihren OpenMeteo-Äquivalenten zu
+         */
         const openMeteoVarMap = {
             currentTemperature: "temperature_2m",
             //feelsLike:          "temperature_2m",
@@ -519,10 +603,10 @@
             windSpeed:          "wind_speed_10m"
         };
 
-        // Letzte angeklickte Card für das reloaden merken
+        // Für History/Forecast Modal: Zuletzt angeklickte Variable
         let lastCardVar = null;              
 
-        // optisch aufbessern/formatieren, wird von history und forecast verwendet
+        // Hilfsfunktion: Zentrierte Nachricht anzeigen
         function setCenteredMessage(container, text) {
             container.innerHTML = "";
             container.style.display = "flex";
@@ -533,6 +617,7 @@
             container.innerText = text;
         }
 
+        // Hilfsfunktion: Erstellt eine Sektion Überschrift
         function makeSectionTitle(text, margin) {
             const el = document.createElement("div");
             el.style.color = "white";
@@ -542,6 +627,7 @@
             return el;
         }
 
+        // Hilfsfunktion: Plot-Bild Element erstellen
         function makePlotImage(altText) {
             const img = document.createElement("img");
             img.alt = altText;
@@ -552,7 +638,10 @@
         }
 
 
-        // ===== Funktion zum History/Forecast Modal öffnen =====
+        /**
+         * Öffne History/Forecast Modal
+         * Lädt Graphiken basierend auf ausgewählte Variable
+         */
         function openHistoryAndForecast(variable) {
             lastCardVar = variable;
 
@@ -660,7 +749,7 @@
         });
         }
 
-        // Modal wieder schließen
+        // Modal schließen-Funktion
         function closeHistory() {
             if (!historyOverlay) return;
             historyOverlay.classList.remove("history-show");
@@ -675,14 +764,15 @@
             });
         }
 
-        // ===================================
-        // ENDE VON HISTORY / FORECAST MODAL 
-        // ===================================
+        /**
+         * ENDE: Verlaufs-/Prognose-Modal
+         */
 
 
-        // Updates vom Server empfangen (SocketIO)
+        /**
+         * Echtzeit-Updates vom Server (SocketIO)
+         */
         socket.on('update', data => {
-            console.log("🔔 Update vom Server:", data);
 
             for (let key in data) {
 
@@ -738,27 +828,26 @@
             if (typeof window.generatePlot === 'function') window.generatePlot();
         });
 
-        // Initiale Daten vom Server holen (fetch)
+        // Initiale Wetterdaten holen vom Server
         fetch('/weather')
             .then(res => res.json())
             .then(data => {
-                console.log("📦 Initiale Wetterdaten:", data);
 
                 for (let key in data) {
-                    // City
+                    // Stadt-Anzeige
                     if (key === 'city') {
                         const cityDisplay = document.getElementById('cityDisplay');
                         if (cityDisplay) cityDisplay.innerText = data.city;
                     }
 
-                    // windDirection
+                    // Windrichtungs-Kompass
                     if (key === 'windDirection') {
                         const arrow = document.getElementById('arrow-windDirection');
                         const deg = parseFloat(data[key]);
                         if (!isNaN(deg) && arrow) arrow.style.transform = `translate(-50%, -50%) rotate(${deg - COMPASS_ICON_OFFSET}deg)`;
                     }
 
-                    // sunrise & sunset
+                    // Sonnenauf- und -untergang mit Uhrzeit
                     if (key === 'sunrise' || key === 'sunset') {
                         const timeStr = data[key];
                         if (timeStr) {
@@ -792,7 +881,9 @@
             }
         });
 
-        // Menu logic (small)
+        /**
+         * Formatierung für relative Zeit (z.B. "vor 2 Min")
+         */
         function formatRelativeTime(ts) {
             if (!ts) return '—';
             let date;
@@ -804,24 +895,31 @@
             const diffMin = Math.round(diffSec / 60);
             if (diffMin < 60) return `${diffMin}m`;
             const diffHour = Math.round(diffMin / 60);
-            if (diffHour < 24) return `${diffHour}std`;
+            if (diffHour < 24) return `${diffHour}Std`;
             const diffDays = Math.round(diffHour / 24);
-            return `${diffDays}d`;
+            return `${diffDays}T`;
         }
+
+        /**
+         * ========================================================
+         * API STATUS UPDATE
+         * ========================================================
+         * Ruft /status Endpoint ab und zeigt API-Verbindungsstatus
+         * an. Aktualisiert dynamisch die apiRows.
+         */
         async function updateApiStatus() {
             try {
                 const res = await fetch('/status');
-                // no global apiStatus; create dynamic per-api rows in #apiRows
                 const apiRows = document.getElementById('apiRows');
 
-                // Icons für den Poll-Status
+                // Icon-Zuordnung für API-Provider
                 const API_ICON_MAP = {'openweather': '/static/images/icon.svg', 'csv': '/static/images/csv.png'};
                 if (res.ok) {
-                    // read optional JSON body
+                    // Optional JSON Body auslesen
                     let body = null;
                     try { body = await res.json(); } catch (e) { body = null; }
                     console.debug('Status: OK');
-                    // update per-api statuses if present
+                    // API-Status wenn vorhanden
                     if (body && body.apis) {
                         // build/update a row for each API in the response
                         Object.keys(body.apis).forEach(k => {
@@ -888,12 +986,12 @@
                         const last = r.querySelector('.api-last');
                         const statusNode = r.querySelector('.api-status');
                         if (dot) { dot.classList.remove('ok'); dot.classList.add('error'); }
-                        if (statusNode) { statusNode.innerText = 'ERROR'; statusNode.classList.remove('ok'); statusNode.classList.add('error'); }
+                        if (statusNode) { statusNode.innerText = 'FEHLER'; statusNode.classList.remove('ok'); statusNode.classList.add('error'); }
                         if (last) last.innerText = (body && body.lastPolled) ? formatRelativeTime(body.lastPolled) : '—';
                     });
                 }
             } catch (err) {
-                // mark per-apis as offline on error
+                // API-Status auf "offline" setzen bei Fehler
                 apiRows.querySelectorAll('.api-row').forEach(r => {
                     const dot = r.querySelector('.status-dot');
                     const last = r.querySelector('.api-last');
@@ -904,6 +1002,8 @@
                 });
             }
         }
+
+        // Starte Status-Abfrage: initial + alle 15 Sekunden
         updateApiStatus();
         setInterval(updateApiStatus, 15000);
     </script>
