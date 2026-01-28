@@ -74,6 +74,10 @@ Beispiel-Ausgabe:
 ```text
 09.12.2025 Berlin: 5°C — Leicht bewölkt
 ```
+Vorhandene Städte: 
+```text
+Berlin, Hamburg, Iserlohn
+```
 
 ---
 

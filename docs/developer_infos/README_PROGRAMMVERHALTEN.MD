@@ -34,6 +34,8 @@
 ## 4) Datenbeschaffung: Provider-Prinzip
 
 - `CSVWeatherProvider`: lädt CSV
+  - zurzeit folgende Städte vorhanden: 
+    - Berlin, Iserlohn, München, Köln, Stuttgart, Shanghai, London
 - `APIWeatherProvider`: ruft Live-Daten ab
 - alle Daten werden einheitlich normalisiert, egal aus welcher Quelle
 
