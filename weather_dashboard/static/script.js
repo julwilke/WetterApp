@@ -1,19 +1,16 @@
 /*
- * Sun path (Parabola) generator
- * ------------------------------------------------------------------
- * The `generateSunArc` function below draws a small arc that represents
- * the path of the sun between sunrise & sunset. It calculates points on
- * a unit semicircle, normalizes the current time between sunrise/sunset,
- * and places a marker where the sun currently is.
- *
- * Important: This is a geometric representation, not a physically
- * accurate astronomical model. It's primarily intended as a compact
- * visual indication for the UI.
+ * Sonnenbahn-Visualisierung (Sun Arc Generator)
+ * Zeichnet einen Bogen, der den Weg der Sonne zwischen
+ * Auf- und Untergang darstellt. Geometrische Darstellung,
+ * keine astronomisch exakte Berechnung.
+ */
+
+/**
+ * parseTimeToDecimal
+ * Konvertiert Zeit-String in Dezimalstunden
+ * '06:30' → 6.5 oder '6.5' → 6.5
  */
 function parseTimeToDecimal(timeString) {
-    // Accepts either 'HH:MM' or decimal hours like '6.5' and returns a number
-    // representing the hours as decimal, e.g., '06:30' => 6.5. Returns null
-    // for invalid inputs.
     if (!timeString) return null;
     if (timeString.includes(':')) {
         const parts = timeString.split(':');
@@ -21,7 +18,7 @@ function parseTimeToDecimal(timeString) {
         const m = parseInt(parts[1], 10);
         return h + m / 60;
     }
-    // fallback: parse decimal
+    // Fallback: Parse als Dezimalzahl
     return parseFloat(timeString);
 }
 
@@ -30,20 +27,13 @@ let defaultSunset = 18.5;
 let defaultCurrent = (new Date()).getHours() + (new Date()).getMinutes() / 60;
 
 /**
- * generateSunArc
- * - plotId: DOM id of the plot container (the Plotly graph div)
- * - containerId: container used to compute responsive width
- * - sunriseTime/sunsetTime: decimal hours (e.g., 06.5 for 06:30)
- * - currentTime: decimal hour that will be highlighted
- * - lineColor, markerColor: style customizations
- * - markerSymbol: Plotly marker symbol as fallback
- * - useFaIcon/faIconChar: attempt to render a FontAwesome glyph for the
- *   marker — Plotly will try to render a text trace; if unsupported, a
- *   regular marker is used.
+ * generateSunArc - Zeichnet Sonnenbahn mit Plotly
+ * Berechnet Bogen zwischen Sonnenauf- und -untergang
+ * und platziert aktuellen Sonnenstand als Marker
  */
 function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunsetTime = defaultSunset, currentTime = defaultCurrent, lineColor = 'orange', markerColor = 'red', markerSymbol = 'circle', useFaIcon = false, faIconChar = '\uF185') {
         if (typeof Plotly === 'undefined') {
-            console.warn('Plotly is not loaded, skipping generateSunArc');
+            console.warn('Plotly nicht geladen, generateSunArc übersprungen');
             return;
         }
         let xValues = [];
@@ -53,19 +43,19 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
         const sunsetAngle = 0;
         let totalHours = sunsetTime - sunriseTime;
         if (!isFinite(totalHours) || totalHours <= 0) {
-            // fallback to defaults if sunset <= sunrise
+            // Fallback auf Standardwerte falls Sonnenuntergang <= Sonnenaufgang
             totalHours = defaultSunset - defaultSunrise;
         }
 
+        // Berechne Punkte auf dem Halbkreis-Bogen
         for(let h = sunriseTime; h <= sunsetTime; h += 0.1){
             let t = (h - sunriseTime) / totalHours;
             let angle = sunriseAngle * (1 - t);
             xValues.push(Math.cos(angle));
-            yValues.push(Math.sin(angle) * 0.75); // streckt/komprimiert vertikal
-
+            yValues.push(Math.sin(angle) * 0.75); // Vertikale Kompression
         }
 
-            // Helper to convert an hour value to x,y on the unit semicircle arc
+        // Hilfsfunktion: Konvertiere Stundenwert zu x,y Koordinaten
         function timeToXY(hourValue) {
             let t = (hourValue - sunriseTime) / totalHours;
             if (t < 0) t = 0;
@@ -74,28 +64,30 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             return { x: Math.cos(angle), y: Math.sin(angle) * 0.75 };
         }
 
-        // compute markers for sunrise/sunset and current time
+        // Berechne Positionen: Aufgang, Untergang, aktuelle Zeit
         const sunrisePoint = timeToXY(sunriseTime);
         const sunsetPoint = timeToXY(sunsetTime);
         const currentPoint = timeToXY(currentTime);
 
-        console.debug('generateSunArc debug', {plotId, sunriseTime, sunsetTime, currentTime, totalHours, sunrisePoint, sunsetPoint, currentPoint});
 
-        // prevent errors if container missing – Plotly.react would otherwise throw
+
+        // Fehlerbehandlung: Container muss existieren
         if (!document.getElementById(plotId)) {
-            console.warn('Plot container not found', plotId);
+            console.warn('Plot-Container nicht gefunden:', plotId);
             return;
         }
 
+        // Erstelle Plotly Traces: Bogen + Marker
         const traces = [
+            // Sonnenbahn-Linie
             {
                 x: xValues,
                 y: yValues,
                 mode: 'lines',
                 line: {color: lineColor, width: 3},
-                    hoverinfo: "skip"
+                hoverinfo: "skip"
             },
-            // sunrise marker
+            // Sonnenaufgang-Marker
             {
                 x: [sunrisePoint.x],
                 y: [sunrisePoint.y],
@@ -103,7 +95,7 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
                 marker: {color: 'rgba(255,255,255,0.5)', size: 8, symbol: 'circle'},
                 hoverinfo: 'skip'
             },
-            // sunset marker
+            // Sonnenuntergang-Marker
             {
                 x: [sunsetPoint.x],
                 y: [sunsetPoint.y],
@@ -113,9 +105,9 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             },
         ];
 
-        // Optional: use FontAwesome icon for the marker if requested — fallback to regular marker
+        // Aktuelle Sonnenposition-Marker
         if (useFaIcon) {
-            // Add the FA icon as a text trace (requires FontAwesome CSS to be loaded)
+            // Versuche FontAwesome-Icon als Text Trace (benötigt geladenes FontAwesome CSS)
             traces.push({
                 x: [currentPoint.x],
                 y: [currentPoint.y],
@@ -133,15 +125,14 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             });
         }
 
-        // Automatic range and padding
+        // Automatische Bereich- und Padding-Berechnung
         let maxY = Math.max(...yValues, currentPoint.y);
         let padding = 0.15;
 
-        // Responsive: width based on container
+        // Responsive: Breite basierend auf Container
         const width = document.getElementById(containerId) ? document.getElementById(containerId).offsetWidth : 160;
-        // make plot more visible by default
         const height = Math.max(150, Math.round(width * 0.75));
-        console.debug('plot dims', { width, height });
+        console.debug('Plot-Dimensionen:', { width, height });
 
         const layout = {
             xaxis: {
@@ -160,25 +151,24 @@ function generateSunArc(plotId, containerId, sunriseTime = defaultSunrise, sunse
             margin: {l:0, r:0, t:0, b:0},
             width: width,
             height: height,
-            showlegend: false
-            ,
+            showlegend: false,
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)'
         };
 
-        // Render the plot as static: no zoom/pan interactions or mode bar
+        // Render als statischer Plot: keine Zoom/Pan-Interaktionen oder Mode Bar
         const plotlyConfig = { responsive: false, staticPlot: true, displayModeBar: false };
         Plotly.react(plotId, traces, layout, plotlyConfig);
 }
 
-// Make the function available globally
+// Globale Verfügbarkeit der Funktion
 window.generateSunArc = generateSunArc;
 
+/**
+ * generatePlot - Rendere Sonnenbahn-Block neu
+ * Liest Auf-/Untergangszeiten aus DOM und zeigt aktuellen Sonnenstand
+ */
 function generatePlot() {
-    // generatePlot() reads current sunrise/sunset values from the DOM and
-    // converts them to decimals using `parseTimeToDecimal`. If fields are
-    // missing, default values are used; then a call to generateSunArc() will
-    // draw the arc in the 'sunArcPlot' placeholder.
     const sunriseEl = document.getElementById('sunrise');
     const sunsetEl = document.getElementById('sunset');
     const sunriseValParsed = sunriseEl ? parseTimeToDecimal((sunriseEl.innerText || sunriseEl.textContent).trim()) : null;
@@ -187,15 +177,15 @@ function generatePlot() {
     const sunsetVal = (typeof sunsetValParsed === 'number' && !isNaN(sunsetValParsed)) ? sunsetValParsed : defaultSunset;
     const now = new Date();
     const currentVal = now.getHours() + now.getMinutes() / 60;
-    console.debug('generatePlot: sunriseVal, sunsetVal, currentVal', sunriseVal, sunsetVal, currentVal);
+    console.debug('Plot: Aufgang, Untergang, aktuell:', sunriseVal, sunsetVal, currentVal);
 
-    // Render the combined sun arc block, if present
+    // Render kombinierter Sonnenbahn-Block, falls vorhanden
     if (document.getElementById('sunArcPlot')) {
         generateSunArc('sunArcPlot', 'sunArcPlot', sunriseVal, sunsetVal, currentVal, 'goldenrod', '#ffdf5f', 'star', true, '\uF185');
     }
 }
 
-// Export helper and hookup for resizing
+// Export der Funktion und Hookup für Größenänderungen
 window.generatePlot = generatePlot;
 generatePlot();
 window.addEventListener('resize', generatePlot);

@@ -1,23 +1,18 @@
+/*
+ * Bootstrap-ähnliche Initialisierung für WetterApp
+ * Behandelt Responsive-Verhalten und DOM-Interaktionen
+ */
 
-if (window.innerWidth < 768) {
-	[].slice.call(document.querySelectorAll('[data-bss-disabled-mobile]')).forEach(function (elem) {
-		elem.classList.remove('animated');
-		elem.removeAttribute('data-bss-hover-animate');
-		elem.removeAttribute('data-aos');
-	});
-}
-
+// Nach Seiten-Load: Hover-Animationen initialisieren
 document.addEventListener('DOMContentLoaded', function() {
-
-	var hoverAnimationTriggerList = [].slice.call(document.querySelectorAll('[data-bss-hover-animate]'));
-	var hoverAnimationList = hoverAnimationTriggerList.forEach(function (hoverAnimationEl) {
-		hoverAnimationEl.addEventListener('mouseenter', function(e){ e.target.classList.add('animated', e.target.dataset.bssHoverAnimate) });
-		hoverAnimationEl.addEventListener('mouseleave', function(e){ e.target.classList.remove('animated', e.target.dataset.bssHoverAnimate) });
-	});
-
-	var charts = document.querySelectorAll('[data-bss-chart]');
-
-	for (var chart of charts) {
-		chart.chart = new Chart(chart, JSON.parse(chart.dataset.bssChart));
-	}
+    // Hover-Animationen für Elemente mit 'data-bss-hover-animate' Attribut
+    var hoverAnimationTriggerList = [].slice.call(document.querySelectorAll('[data-bss-hover-animate]'));
+    hoverAnimationTriggerList.forEach(function (elem) {
+        elem.addEventListener('mouseenter', function(e) { 
+            e.target.classList.add('animated', e.target.dataset.bssHoverAnimate); 
+        });
+        elem.addEventListener('mouseleave', function(e) { 
+            e.target.classList.remove('animated', e.target.dataset.bssHoverAnimate); 
+        });
+    });
 }, false);

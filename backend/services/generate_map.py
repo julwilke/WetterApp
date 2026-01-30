@@ -24,12 +24,17 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
         temp (str/int): Temperatur für Marker
         zoom (int): Zoom-Level der Karte
     """
+    # ===== 1) FEHLER ABFANGEN
+    if lat is None or lon is None:
+        logger.info("Keine gültigen Koordinaten für Karte vorhanden!")
+        return None
+    
     logger.info(f"🗺️  Erstelle Karte für Koordinaten: {lat}, {lon}, Temp={temp}")
 
-    # Neue Folium-Karte
+    # ===== 2) KARTE ERSTELLEN (FOLIUM) =====
     m = folium.Map(location=[lat, lon], zoom_start=zoom)
 
-    # Temperatur-Pin als DivIcon
+    # ===== 3) TEMPERATUR PIN ALS DivIcon =====
     html = f"""
     <div style="position: relative; display: inline-block; text-align:center; white-space: nowrap;">
         <div style="
@@ -67,7 +72,7 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
 
 
 
-    # ===== PFADE BESTIMMEN =====
+    # ===== 5) PFADE BESTIMMEN =====
     # Dieses Skript liegt zurzeit in: WetterApp/backend/services/generate_map.py
 
     # Dieses Skript liegt in:                   ...backend/services/
@@ -87,8 +92,10 @@ def generate_map(lat=52.5200, lon=13.4050, temp="--", zoom=12):
 
 
 
-    # ===== KARTE SPEICHERN =====
+    # ===== 6) KARTE SPEICHERN =====
     m.save(output_path)
 
     #Ausgabe Konsole
     logger.info(f"✅ Karte gespeichert unter: {output_path}")
+
+    

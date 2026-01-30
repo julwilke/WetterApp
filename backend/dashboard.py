@@ -1,5 +1,5 @@
 ###############################################
-#   🌦 WETTER-DASHBOARD – BACKEND 1.0.1       #
+#   🌦 WETTER-DASHBOARD – BACKEND 1.0.5       #
 ###############################################
 
 """ 
@@ -15,18 +15,24 @@ Aufgaben:
 
 # =============== IMPORTS ====================
 import logging
-from datetime import datetime
 
-from flask import Flask, render_template, jsonify
+from datetime import datetime, timedelta, timezone
+
+from flask import Flask, render_template, jsonify, request, send_file
 from flask_socketio import SocketIO
 
 from geopy.geocoders import Nominatim
 
+from io import BytesIO
+
+# Eigene Imports
 from backend.provider.csv_weather_provider import CSVWeatherProvider
 from backend.services import generate_map
 
-#from services import data_normalizer   # J: aktuell noch nicht hier verwendet
-#from venv import logger                # J: Woher kam das?
+from backend.services.history.history_openmeteo import fetch_openmeteo_history_dataframe
+from backend.services.forecast.forecast_openmeteo import fetch_openmeteo_forecast_dataframe
+
+from backend.services.plotter import build_single_history_plot_png, build_single_forecast_plot_png
 
 # ============================================
 #    1) Logging -Konfiguration 
@@ -51,10 +57,9 @@ class WeatherDashboard:
             static_folder='../weather_dashboard/static'
         )
 
-        #Hier passiert...
-        self.socketio = SocketIO(self.app, cors_allowed_origins="*")
+        self.socketio = SocketIO(self.app, cors_allowed_origins="*") # Noch alle CORS-Origins erlaubt, da es sich um Studentenprojekt handelt 
 
-        # Provider auswählen: Entwerder eine der APIs oder Default CSV-Provider nutzen
+        # Provider auswählen: API oder Provider | Als Default CSV-Provider nutzen
         if provider is not None:
             self.provider = provider
         else:
@@ -64,11 +69,15 @@ class WeatherDashboard:
         self.city = None                    # Aktuelle Stadt
         self.weather_data = None            # Wetterdaten für die Stadt als dict
         self.last_polled = None             # Zeitpunkt der letzten erfolgreichen Abfrage
+             
         
+        #Geodaten für Karte cachen, damit Nominatim nicht unnötig oft die Koordinaten wandelt und die Stadt abholt für die Karte
+        self.geo_cache = {}
+
         #Geolocator Client bauen, später über Nominatim Städte zu Koordinaten auflösen
         self.geolocator = Nominatim(user_agent="weather_dashboard")
 
-        #J: Neu hinzugefügt für bessere Modularisierung
+        # Aufruf der Hilfsfunktionen
         self.define_routes()
         self.define_socket_events()
 
@@ -76,89 +85,158 @@ class WeatherDashboard:
     # ROUTES → Frontend API
     # ========================================
 
-    #J: Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
+    #Routen und Sockets als Funktionen (siehe oben im __init__) statt alles in den Konstruktor zu laden
 
     def define_routes(self):
-        """Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird."""
+        """
+        Definiert die Routen. Routen werden erst registriert, wenn WeatherDashboard() erstellt wird.
+        """
        
-       # Route für den API-Status / sichtbar im Dashboard oben rechts. unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
-        @self.app.route('/status')
-        def status():
-            provider_name = self.provider.__class__.__name__
-            provider_key = provider_name.lower().replace("weatherprovider", "")
-
-            return jsonify({
-                "apis": {
-                    provider_key: {
-                        "status": "ok",
-                        "lastPolled": (
-                            self.last_polled.isoformat() + "Z"
-                            if self.last_polled else None
-                        )
-                    }
-                }
-            })
-
-
         # Route für die Hauptseite     
         @self.app.route('/')
         def index():
             return render_template('index.html')
 
+        # Route für den API-Status / sichtbar im Dashboard oben rechts. Unterscheidet zwischen API und CSV und zeigt Letztten Abruf (last_polled an)
+        @self.app.route('/status')
+        def status():
+            
+            # 1) Quelle bestimmen (API/CSV)            
+            
+            provider_klasse = self.provider.__class__.__name__
+
+            # Nimmt den Namen "openweather" oder "csv" so wie es das Frontend erwartet
+            if provider_klasse == "APIWeatherProvider":
+                provider_key = "openweather"          
+            elif provider_klasse == "CSVWeatherProvider":
+                provider_key = "csv"
+            else:
+                provider_key = "unknown" 
+
+            # 2) Rückgabe
+            return jsonify({
+                "apis": {
+                    provider_key: {
+                        "status": "ok" if self.last_polled is not None else "unbekannt",
+                        "lastPolled": (
+                            self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None
+                        )
+                    }
+                }
+            })
+
+       
+
         # Route für Wetterdaten als JSON wenn Frontend diese anfragt
         @self.app.route('/weather')
         def weather():
-            """Liefert die aktuellen Wetterdaten für self.city als JSON.
-            Nutzt self.weather_data, lädt aber bei jedem Aufruf neu vom Provider.
-
-            Returns:
-                _type_: _description_
+            """
+            Liefert die aktuellen Wetterdaten für self.city als JSON.
+            
+            - HTTP Statuscode bei Fehlern
+            - Daten werden refreshed beim Provider, wenn sie 
+                - fehlen
+                - noch nicht abgerufen wurden
             """
 
-            # ===== 1) FEHLER ABFANGEN =====
+            # ===== 1) FEHLER ABFANGEN / DATEN VALIDIEREN =====
 
             # Prüfen ob überhaupt eine Stadt gesetzt ist
             if not self.city:
-                logger.warning("Request auf /weather ohne definierte Stadt")
+                logger.warning("Anfrage (Request) auf /weather ohne definierte Stadt")
 
-                response = {
-                    "city": None
-                }
-
-                return jsonify(response), 400 # 400 = Bad Request                  
+                return jsonify({
+                    "city": None, 
+                    "error": "Keine Stadt gesetzt"
+                    }), 400  # 400 = Bad Request                  
                 
+            now = datetime.utcnow()            # Aktuelle Zeit abstempeln
+        
+            # ===== 2) REFRESH DER DATEN - ENTSCHEIDUNG =====
+         
+            # Refresh-Variable TRUE setzen, wenn 
+            # - noch keine Daten vorhanden (Erststart der App)
+            # - noch nie erfolgreich abgefragt wurde
+    
             
-            # Falls noch keine Daten im Speicher sind, neu laden
-            if self.weather_data is None:
-                logger.info(f"/weather: Keine Daten im Speicher, lade neu für '{self.city}'.'") 
+            refresh_noetig = (
+                self.weather_data is None
+                or self.last_polled is None
+            )
+            
+           # ===== 3) REFRESH DER DATEN - DATEN ABHOLEN =====
 
-                # Neu laden          
-                data = self.provider.get_weather_for_city(self.city)
+           #  Wenn Refresh nötig ist, dann das Wetter abrufen
+            if refresh_noetig:
+                logger.info(
+                    f"/weather: Refresh nötig für (city='{self.city}', "
+                    f"last_polled={self.last_polled}"
+                )
 
-                if data is None:
-                    logger.warning(f"/weather: Keine Daten für Stadt '{self.city}' gefunden.")
+                # --- Versuchen die Daten zu Refreshen ---
+                try:
+                    daten_fresh = self.provider.get_weather_for_city(self.city)
 
-                    response = {
-                        "city": self.city
-                    }
+                    # === FALL A: Provider liefert nichts (None) ===
+                    if daten_fresh is None:
+                        logger.warning(f"/weather: Provider liefert keine Daten für '{self.city}'")
+
+                        # Fallback 1: Cache existiert und wir können Cache-Daten zurückgeben (HTTP 200: OK)
+                        if self.weather_data is not None:
+                            logger.info("/weather: Cache vorhanden - verwende Cache-Daten als Fallback")
+                                                      
+                        # Fallback 2: Kein Cache und wir können nichts zurückliefern (HTTP 503: Service unavailable )
+                        else:
+                            logger.error("/weather: Kein Cache verfügbar, kann keine Daten liefern")
+                            
+                            return jsonify({
+                                "city": self.city,
+                                "error": "Provider zur Zeit nicht verfügbar (Keine Daten und kein Cache vorhanden)"
+                            }), 503 # 503: Service unavailable
+
+
+                    # === FALL B: Provider liefert gute Daten (dict) ===
+                    else:
+                        # Cache kann aktualisiert werden
+                        self.weather_data = daten_fresh
+                        self.last_polled = now
+                                    
+                # --- Fangen der harten Fehler die nicht im try-Block behandelt werden (Exception) ---
+                except Exception as e:                    
+                    logger.error(f"/weather: Fehler beim Abrufen für '{self.city}': {e}")
                     
-                    return jsonify(response), 404   # 404 = Not Found
-                           
-                # Erfolgreich Daten geladen
-                self.weather_data = data
-                self.last_polled = datetime.utcnow()
+                    # Fallback 1: Cache existiert und wir können Cache-Daten zurückgeben (HTTP 200: OK) 
+                    if self.weather_data is not None:
+                        logger.info("/weather: Fehler - Fallback auf Cache Daten")
 
-            # Koordinaten zur aktuellen Stadt holen - Karte noch nicht generieren hier
+                    # Fallback 2: Kein Cache vorhanden - Fehler!
+                    else:
+                        logger.error("/weather: Fehler - Kein Cache für Fallback verfügbar")
+
+                        return jsonify({
+                            "city": self.city,
+                            "error": "Wetterdaten-Abruf ist fehlgeschlagen"
+                        }), 503 #503 = Service unavailable
+
+
+
+            # ===== 4) KOORDINATEN HOLEN FÜR MAP (noch keine Generierung) =====
+            logger.info(f"Koordinaten für '{self.city}' werden geholt")
             lat, lon = self.fetch_coordinates(self.city)
+            
 
-            response = {                
+
+            # ===== 5) RESPONSE BAUEN =====
+            response = {        
+                "city": self.city,        
                 "lat": lat,
-                "lon": lon,
-                "lastPolled": datetime.utcnow().isoformat() + "Z",
+                "lon": lon,                                    
+                "lastPolled": self.last_polled.isoformat().replace("+00:00", "Z") if self.last_polled else None
             }
 
             # Damit History im Frontend nicht crasht, aber zumindest leer übergeben wird. Kann erweitert werden
             # Frontend erwartet '_history' - Werte im response
+            # Alter Code aber Frontend erwartet den Teil in dem "normalen" Wetter-JSON der Aktualdaten
             response.update({
                 "currentTemperature_history": [],
                 "humidity_history": [],
@@ -166,15 +244,163 @@ class WeatherDashboard:
             })
             
             # Wetterdaten hinzufügen ins JSON dict
-            for key, value in self.weather_data.items():
-                response[key] = value
+            if isinstance(self.weather_data, dict):
+                response.update(self.weather_data)
 
-            return jsonify(response)
-        
+            else:                                
+                logger.error("/weather: weather_data ist nicht verfügbar/kein dict")
+                return jsonify({
+                    "city": self.city,
+                    "error": "Keine Wetterdaten verfügbar"
+                }), 503 # 503 = Service unavailable
+
+            return jsonify(response), 200 # 200 = OK        
 
 
 
-        
+
+        # Route für die Vergangenheitsdaten / History
+              
+        @self.app.route('/history_plot.png')
+        def history_plot_png():
+            """
+            Liefert ein Matplotlib-PNG für eine Variable (var).
+            Standard: letzte 2 Tage, UTC.
+            """
+
+            # Welche Variable soll geplottet werden?
+            var = request.args.get("var", "temperature_2m")
+
+            # Zeitraum in Tagen
+            days = request.args.get("days", "2")
+            
+            try:
+                days = int(days)
+            except Exception:
+                days = 2
+
+            # Stadt: Aus der Anfrage oder ansonsten self.city nehmen
+            city = request.args.get("city")
+            
+            if city is None or str(city).strip() == "":
+                city = self.city
+
+            if city is None or str(city).strip() == "":
+                return jsonify({"error": "Keine Stadt gesetzt"}), 400
+
+            # Datum berechnen
+            end_date = datetime.now(timezone.utc).date() # Julian Test veraltet: datetime.utcnow().date()
+            start_date = end_date - timedelta(days=days)
+
+            # Koordinaten holen
+            lat, lon = self.fetch_coordinates(city)
+
+            # DataFrame holen
+            df = fetch_openmeteo_history_dataframe(
+                lat=lat,
+                lon=lon,
+                start_date=start_date.isoformat(),
+                end_date=end_date.isoformat()
+            )
+
+            # Plot-Beschriftung je nach 'var' (genau wie im Forecast)
+            if var == "temperature_2m":
+                title = f"Temperatur Vergangenheit: {city}"
+                y_label = "°C"
+            elif var == "relative_humidity_2m":
+                title = f"Luftfeuchte Vergangenheit: {city}"
+                y_label = "%"
+            elif var == "wind_speed_10m":
+                title = f"Windgeschwindigkeit Vergangenheit: {city}"
+                y_label = "km/h"
+            else:
+                title = f"History: {city} ({var})"
+                y_label = var
+
+            # Erstellen des Plots
+            png = build_single_history_plot_png(df, var, title, y_label)
+
+            if png is None:
+                return jsonify({"error": "Keine Plot-Daten für History verfügbar"}), 503
+
+            return send_file(
+                BytesIO(png),
+                mimetype="image/png",
+                as_attachment=False,
+                download_name="history.png"
+            )
+
+        # Route für die Zukunftsdaten / Forecast
+        @self.app.route('/forecast_plot.png')
+        def forecast_plot_png():
+            """
+            Liefert ein Matplotlib-PNG für eine Variable (var).
+            Standard: nächste 7 Tage, UTC.
+            """
+
+            # Welche Variable soll geplottet werden?
+            var = request.args.get("var", "temperature_2m")
+
+            # Zeitraum in Tagen
+            days = request.args.get("days", "7")
+
+            try:
+                days = int(days)
+            except Exception:
+                days = 7
+
+            # Begrenzen auf 1...14 Tage
+            if days < 1:
+                days = 1
+            if days > 14:
+                days = 14
+
+            # Stadt: Aus der Anfrage oder ansonsten self.city nehmen
+            city = request.args.get("city")
+
+            if city is None or str(city).strip() == "":
+                city = self.city
+
+            if city is None or str(city).strip() == "":
+                return jsonify({"error": "Keine Stadt gesetzt"}), 400
+
+            # Koordinaten holen
+            lat, lon = self.fetch_coordinates(city)
+
+            df = fetch_openmeteo_forecast_dataframe(
+                lat=lat,
+                lon=lon,
+                days=days
+            )
+
+            # Plot-Beschriftung je nach 'var' (genau wie bei history)
+            if var == "temperature_2m":
+                title = f"Temperatur Vorhersage: {city}"
+                y_label = "°C"
+            elif var == "relative_humidity_2m":
+                title = f"Luftfeuchte Vorhersage: {city}"
+                y_label = "%"
+            elif var == "wind_speed_10m":
+                title = f"Windgeschwindigkeit Vorhersage: {city}"
+                y_label = "km/h"
+            else:
+                title = f"Forecast: {city} ({var})"
+                y_label = var
+
+            # Erstellen des Plots
+            png = build_single_forecast_plot_png(df, var, title, y_label)
+
+            if png is None:
+                return jsonify({"error": "Keine Plot-Daten für Forecast verfügbar"}), 503
+            
+            return send_file(
+                BytesIO(png),
+                mimetype="image/png",
+                as_attachment=False,
+                download_name="forecast.png"
+            )
+
+
     # ========================================
     # SOCKET → erhält (neue) Stadt vom Frontend
     # ========================================
@@ -219,16 +445,14 @@ class WeatherDashboard:
                 old_city_str = str(self.city).strip()
 
                 if new_city_str.lower() == old_city_str.lower():
-                    logger.info(f"cityInput: Stadt '{new_city_str}' ist bereits gesetzt, ignoriere Anfrage.")
+                    logger.debug(f"cityInput: Stadt unverändert: '{new_city_str}'")
                     return
                 
 
             # ===== 2) NEUE STADT versuchen =====
 
-            logger.info(f"🌍 Versuche Stadtwechsel → '{new_city_str}' (vorher: '{self.city}')")
-            # VERALTET -> 'self.city = new_city_str' -> J: Nach unten in 3) verschoben weil: Wenn ich die Stadt önder steht oben IMMER ne neue Stadt im Dashboard, die karten und werte werden nur aktualisiert, wenn auch vorhadnen und geprüft.
-            # jetzt wird auch oben der Name erst aktualisiert, wenn wirklich eine neue Stadt übernommen wurde
-
+            logger.info(f"🌍 Versuche Stadtwechsel → '{new_city_str}' (vorher: '{self.city}')")          
+            
             # Sofort Wetter versuchen abzuholen
             updated_data = self.provider.get_weather_for_city(new_city_str) # hier jetzt new_city_str
 
@@ -245,11 +469,11 @@ class WeatherDashboard:
 
             # ===== 3) ERFOLG -> STADT ÜBERNEHMEN =====
 
-            logger.info(f"✅ Stadtwechsel erfolgreich: '{self. city}' → '{new_city_str}'") # Erst hier die Stadt wirklich übernommen, wenn sie auch gefunden wurde
+            logger.info(f"✅ Stadtwechsel erfolgreich: '{self.city}' → '{new_city_str}'") # Erst hier die Stadt wirklich übernommen, wenn sie auch gefunden wurde
 
             self.city = new_city_str
             self.weather_data = updated_data
-            self.last_polled = datetime.utcnow()
+            self.last_polled = datetime.now(timezone.utc)   
 
 
             # ===== 4) KARTE GENERIEREN =====
@@ -284,10 +508,6 @@ class WeatherDashboard:
             self.socketio.emit("update", payload) # J: payload ist das dict mit den Daten
 
 
-    #NEU JULIAN 1.0.0 - für das leere initialisieren am Anfang im Konstruktor, jetzt hier die Parameter beschreiben
-    #...erst hier wird mit Werten initialisiert
-
-
     # ========================================
     # INITIALISIERUNG NACH PARAMETERN
     # ========================================
@@ -302,7 +522,7 @@ class WeatherDashboard:
         - setzt self.last_polled
         """
 
-        #Stadt-String sauber machen
+        # Stadt-String sauber machen
         if city is None:
             city_clean = ""
         else:
@@ -317,23 +537,21 @@ class WeatherDashboard:
 
         data = self.provider.get_weather_for_city(city_clean)
 
-        if data is None:
-            logger.error(
-                f"Initialisierung fehlgeschlagen: "
-                f"Provider {type(self.provider).__name__} liefert keine Daten."
-            )
-            return
-
-        #Falls keine Daten gefunden wurden, auf Default zurückfallen
-        if data is None:
-            logger.warning(f"Initialisierung: Keine Daten für Stadt '{city_clean}' gefunden. Fallback auf Default 'Berlin'.")
+        # Wenn keine Daten abgerufen wurden und nicht Berlin (Default) verwendet wurde
+        if data is None and city_clean.lower() != "berlin":
+            logger.warning(f"Initialisierung: Keine Daten für '{city_clean}'. Fallback auf Berlin.")
             city_clean = "Berlin"
             data = self.provider.get_weather_for_city(city_clean)
+
+        # Wenn keine Daten abgerufen wurden und selbst "berlin" nicht funktioniert
+        if data is None:
+            logger.error(f"Initialisierung fehlgeschlagen: Provider {type(self.provider).__name__} liefert keine Daten.")
+            return
 
         # Dann setzen der internen Variablen
         self.city = city_clean
         self.weather_data = data
-        self.last_polled = datetime.utcnow()
+        self.last_polled = datetime.now(timezone.utc)  
 
         # Karte erstellen
         lat, lon = self.fetch_coordinates(self.city)
@@ -349,7 +567,15 @@ class WeatherDashboard:
     # HELPER → Koordinaten holen + Map Update
     # ========================================
     def fetch_coordinates(self, city):
-        """ Holt die Koordinaten (lat, lon) für eine Stadt über Geopy Nominatim."""
+        """ 
+        Holt die Koordinaten (lat, lon) für eine Stadt über Geopy (Nominatim).
+        - ungültige Eingaben wie 'None' oder ein leerer String fallen auf Berlin zurück
+        - Bekannte Städte (zuvor aufgerufen) werden aus Cache abgeholt für Laufzeit Optimierung
+        - Unbekannte Städte werden über Geopy/Nominatim abgeholt
+        - Fehler oder kein Treffer fallen auf Berlin zurück
+        """
+
+        # ===== 1) FEHLER ABFANGEN / VALIDATION =====
 
         # Stadt ist None oder leer, Fallback auf Berlin
         if city is None:
@@ -360,24 +586,35 @@ class WeatherDashboard:
         city_str = str(city).strip()
         if city_str == "":
             logger.warning("fetch_coordinates: Stadt ist leer, Fallback auf Berlin.")
-            return 52.5200, 13.4050
+            return 52.5200, 13.4050 # Berlin
 
-        # Geocoding versuchen
+        # ===== 2) CACHE PRÜFEN =====
+
+        cached_geo = city_str.lower()
+
+        if cached_geo in self.geo_cache:
+            return self.geo_cache[cached_geo]
+
+        # ===== 3) GEOCODING VERSUCHEN =====
+        
         try:
+            logger.info(f"fetch_coordinates: Geocoding für Stadt '{city_str}'")
+            
             location = self.geolocator.geocode(city_str)
 
             if location is not None:
-                return location.latitude, location.longitude
+                koordinaten = (location.latitude, location.longitude)
+                self.geo_cache[cached_geo] = koordinaten   # Aktualisieren des Geo-Caches
+                
+                return koordinaten
+            
             else:
-                logger.warning(
-                    f"Geocoding: Keine Koordinaten für Stadt '{city_str}' gefunden. "
-                    "Fallback auf Berlin."
-                )
+                logger.warning(f"fetch_coordinates: Keine Koordinaten für Stadt '{city_str}' gefunden - Fallback auf Berlin.")
 
         except Exception as e:
-            logger.error(f"Error geocoding '{city_str}': {e}")
+            logger.error(f"fetch_coordinates: Error beim Geocoding von: '{city_str}': {e}")
 
-        # Fallback: Koordinaten von Berlin
+        # ===== 4) FALLBACK AUF BERLIN =====
         return 52.5200, 13.4050
     
 
@@ -386,7 +623,7 @@ class WeatherDashboard:
     # SERVER STARTEN
     # ========================================
 
-    def run(self, host="0.0.0.0", port=5000, city="Berlin"): # run() braucht jetzt city als argument (Berlin als DEFAULT) J: warum? warum reicht nicht run()?
+    def run(self, host="0.0.0.0", port=5000, city="Berlin"):
         """
         - Hier initialisieren, da nun Parameter bekannt sind
         - Jetzt dürfen Daten geladen werden
