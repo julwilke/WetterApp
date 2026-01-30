@@ -133,40 +133,62 @@ pytest cli/test_parse_weather.py
 
 ```text
 WetterApp/
-├── app.py                              # Einstiegspunkt der Anwendung
-├── .env                                # Konfiguration (nicht im Repo)
-├── requirements.txt                    # Python-Abhängigkeiten
+├── app.py                               # Einstiegspunkt
+├── .env.example                         # Beispiel-Konfiguration
+├── requirements.txt
+├── README.md
 │
 ├── backend/
-│   ├── dashboard.py                    # Flask + Socket.IO Backend
-│   ├── logging_config.py               # Zentrale Logging-Konfiguration
+│   ├── dashboard.py                     # Flask + Socket.IO Backend
+│   ├── logging_config.py                # Zentrale Logging-Konfiguration
 │   │
 │   ├── provider/
-│   │   ├── csv_weather_provider.py     # CSV-Datenquelle
-│   │   └── api_weather_provider. py    # API-Gerüst (OpenWeather)
+│   │   ├── api_weather_provider.py      # API-Provider
+│   │   └── csv_weather_provider.py      # CSV-Provider (Fallback / Offline)
 │   │
 │   └── services/
-│       ├── data_normalizer.py          # Daten-Normalisierung
-|       |── history_openmeteo.py        # Zugriff auf Open-Meteo Archive API (History)
-|       |── plotter.py                  # Matplotlib-Plot-Erzeugung (PNG)
-│       └── generate_map. py             # Folium-Karten-Generator
+│       ├── data_normalizer.py           # Vereinheitlicht Datenformat fürs Frontend
+│       ├── generate_map.py              # Folium-Karte erzeugen
+│       ├── plotter.py                   # Matplotlib Plots
+│       │
+│       ├── history/
+│       │   └── history_openmeteo.py     # OpenMeteo Archive API (History)
+│       │
+│       └── forecast/
+│           └── forecast_openmeteo.py    # OpenMeteo Forecast API (Forecast)
 │
 ├── weather_dashboard/
 │   ├── templates/
-│   │   └── index.html                  # Frontend HTML
+│   │   └── index.html                   # Dashboard-Frontend
 │   │
 │   └── static/
-│       ├── styles.css                  # Styling
-│       ├── script.js                   # Frontend-Logik (WebSocket, UI-Updates)
-│       └── map/                        # Generierte Karten (dynamisch)
+│       ├── styles.css                   # Styling
+│       ├── script.js                    # Frontend-Logik
+│       ├── js/
+│       │   ├── bs-init.js               # UI-Init/Animationen
+│       │   └── theme.js                 # Sidebar/Dropdown/Scroll
+│       ├── images/                      # Icons etc.
+│       └── map/                         # generierte Karte (map.html)
 │
-└── data/
-    └── samples/
-        └── weather_sample.csv          # Beispiel-Wetterdaten
+├── cli/
+│   ├── __init__.py
+│   ├── cli.py                           # CLI Tool
+│   ├── sample.csv                       # Sample-Daten für CSV-Provider
+│   ├── logged.csv                       # Beispiel für geloggte Anfragen
+│   ├── test_parse_weather.py
+│   └── test_parse_weather_erklaehrung.md
+│
+├── data/
+│   └── samples/
+│       └── weather_sample.csv           # CSV Beispiel-/Fallback-Daten
+│
+└── docs/
+    └── developer_infos/                 # weitere READMEs zu Teilfunktionen
 ```
 
 
 # 🛠️ Technology Stack
+*(Versionen in requirements.txt)*
 
 ## Backend (Python)
 
@@ -206,7 +228,7 @@ WetterApp/
 ### PKI- Projektgruppe B1-3
 
 Alle Projektmitglieder haben gemeinsam an Konzeption, Abstimmung und Integration der Anwendung gearbeitet.
-Für die Präsentation und zur besseren fachlichen Zuordnung wurden dennoch folgende Themenschwerpunkte festgelegt:
+Für die Präsentation und zur besseren fachlichen Zuordnung werden dennoch die folgenden Themenschwerpunkte vorgestellt:
 
 - Adham E.M. - Weather Provider & API-Anbindung
 - Tugba A. - CLI-Tooling & automatisierte Tests
@@ -214,22 +236,14 @@ Für die Präsentation und zur besseren fachlichen Zuordnung wurden dennoch folg
 - Julian W. - Backend-Architektur & Datenverarbeitung
 
 ## Einsatz von KI-Werkzeugen
-Im Rahmen dieses Projekts war die Nutzung von KI-Werkzeugen (Chatbots, IDE-Integrationen) explizit erlaubt.
-Diese wurden gezielt als Assistenz eingesetzt um die eigene Entwicklungsarbeit zu unterstützen.
+Die Nutzung von KI-Werkzeugen war im Rahmen des Projekts ausdrücklich erlaubt.
+Diese wurden unterstützend eingesetzt, z.B. zur Diskussion und Überprüfung von Architektur- und Strukturierungsentscheidungen, bei Refactoring und Erweiterung bestehender Code-Abschnitte, beim Debugging sowie zur Verbesserung von Lesbarkeit, Kommentaren und Dokumentation.
 
-KI-Werkzeuge wurden insbesondere benutzt für:
-- Diskussion / Bewertung / Validierung von Architektur- und Strukturierungsansätzen (insbesondere nach der initialen Konzeption durch das Projektteam)
-- Refactoring bestehender Code-Abschnitte zur Verbesserung von Lesbarkeit, Wartbarkeit und Konsistenz
-- Identifikation von und Unterstützung bei weiterer möglicher Fehlerquellen (z.B. Exception-Handling, Error-Handling)
-- Unterstützung beim Debugging in konkreten Fehlersituationen
-- Verbesserung der Verständlichkeit größerer Code-Strukturen sowie von Kommentaren und Projektdokumentation
+Konzeption, Grundarchitektur, Modulaufteilung sowie alle fachlichen und technischen Entscheidungen wurden eigenständig durch das Projektteam getroffen.
 
-Die Konzeption, Grundarchitektur sowie Auswahl der Module (Backend/Frontend, Dashboard WebApp, Provider-Architektur, CLI, Tests) sowie fachliche und technische Entscheidungen wurden eigenständig getroffen.
+Alle durch KI vorgeschlagenen Code-Änderungen wurden manuell geprüft, verstanden und an die Projektstruktur angepasst.
 
-Vor der Übernahme der Code-Vorschläge durch KI-Assistenzen, wurden die Codes manuell geprüft, inhaltlich verstanden und an die Projektstruktur sowie Didaktik angepasst.
-
-Als primäres KI-Assistenzwerkzeug wurde ChatGPT eingesetzt.
-Ergänzend wurde die KI-basierte Integration von GitHub-Copilot zur Unterstützung bei Schreibfehlern, kleineren offenen Fehleranfälligkeiten, Stilfragen und repetitiven Schreibarbeiten verwendet.
+Als Assistenz kamen hauptsächlich ChatGPT sowie ergänzend GitHub Copilot für kleinere Hilfestellungen (z.B. Stil, Schreibfehler, repetitive Aufgaben) zum Einsatz.
 
 ## 📄 License
 

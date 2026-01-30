@@ -1,8 +1,8 @@
-CITY,TEMPERATURE,humidity,pressure,weatherDescription,windSpeed,windDirection,cloudCoverage,feelsLike,tempMin,tempMax,sunrise,sunset
-Berlin,30,20,1000,klar,3.5,220,30,32,20,33,06:30,18:30
-Iserlohn,11,82,1011,bewölkt,2.8,210,65,10,8,13,06:35,18:25
-München,9,70,1013,klar,3.1,120,15,8,6,12,06:40,18:20
-Köln,12,75,1008,bewölkt,4.5,240,55,11,9,14,06:38,18:28
-Stuttgart,10,68,1012,klar,1.9,90,20,9,7,13,06:36,18:26
-Shanghai,18,85,1006,dunstig,3.6,160,70,17,15,21,05:55,18:10
-London,10,80,1009,regen,5.2,260,85,9,7,12,06:45,18:30
+CITY,TEMPERATURE,feelsLike,tempMax,tempMin,humidity,pressure,pressureTrend,windSpeed,windGust,windDirection,weatherDescription,cloudCoverage,rain1h,rain3h,snow1h,snow3h,visibility,uvIndex,sunrise,sunset,dewPoint,airQualityIndex,pm2_5,pm10,co,no2,o3,pollenCount,fog
+Berlin,30,32,33,20,20,1000,fallend,3.5,5.5,220,klar,30,0.0,0.0,0.0,0.0,10000,6,06:30,18:30,14.0,40,12,20,0.4,25,60,30,False
+Iserlohn,11,10,13,8,82,1011,stabil,2.8,4.8,210,bewölkt,65,0.0,0.0,0.0,0.0,8000,1,06:35,18:25,7.4,25,6,12,0.3,12,45,20,False
+München,9,8,12,6,70,1013,steigend,3.1,5.1,120,klar,15,0.0,0.0,0.0,0.0,10000,3,06:40,18:20,3.0,35,10,18,0.35,20,55,25,False
+Köln,12,11,14,9,75,1008,fallend,4.5,6.5,240,bewölkt,55,0.0,0.0,0.0,0.0,8000,2,06:38,18:28,7.0,45,14,24,0.5,30,50,35,False
+Stuttgart,10,9,13,7,68,1012,stabil,1.9,3.9,90,klar,20,0.0,0.0,0.0,0.0,10000,3,06:36,18:26,3.6,38,11,19,0.4,22,58,28,False
+Shanghai,18,17,21,15,85,1006,fallend,3.6,5.6,160,dunstig,70,0.0,0.0,0.0,0.0,3000,4,05:55,18:10,15.0,95,55,90,1.2,60,35,10,True
+London,10,9,12,7,80,1009,stabil,5.2,7.2,260,regen,85,1.2,2.8,0.0,0.0,5000,1,06:45,18:30,6.0,55,18,28,0.6,35,40,15,False
