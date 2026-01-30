@@ -61,7 +61,7 @@ def main():
     if provider_mode in ("api", "openweather") and api_key:
         provider = APIWeatherProvider(api_key = api_key)
     else:
-        provider = CSVWeatherProvider("data/samples/weather_sample.csv")
+        provider = CSVWeatherProvider("weather_sample.csv")
 
 
 
