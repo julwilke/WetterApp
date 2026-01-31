@@ -9,6 +9,7 @@
 # Bedingung: Eingabedaten sind "flache" dicts, also Einzeiler, keine verschachtelten Strukturen (Daher wird z.B. im API Provider das JSON auch erstmal in ein 'flat_raw'-dict umgebaut)
 
 import numbers
+import time
 
 # Hilfsfunktion -> int
 def _to_int(value, default=None):
@@ -152,8 +153,18 @@ def normalize_weather_data(raw: dict) -> dict:
     fog = _to_bool(raw.get("fog"), default=False)
 
     # Sonnenaufgang/-untergang
-    sunrise = _to_str(raw.get("sunrise"), default="08:00")
-    sunset = _to_str(raw.get("sunset"), default="18:30")
+
+    #sunrise =  time.strftime("%H:%M", time.localtime(raw.get("sunrise")))
+    #sunset = time.strftime("%H:%M", time.localtime(raw.get("sunset")))
+
+    tz_offset = raw.get("timezone", 0)
+
+    sunrise_ts = raw.get("sunrise")
+    sunset_ts  = raw.get("sunset")
+
+    sunrise = time.strftime("%H:%M", time.gmtime(sunrise_ts + tz_offset)) if sunrise_ts else "08:00"
+    sunset  = time.strftime("%H:%M", time.gmtime(sunset_ts  + tz_offset)) if sunset_ts  else "18:30"
+
 
     # Niederschlag (inkl. Hilfsfunktion pick() siehe unten)
     rain1h = _to_float(pick(raw, "rain1h", "rain_1h"), default=None)
@@ -216,4 +227,3 @@ def pick(raw: dict, *keys):
 
             return v
         return None
-    
