@@ -224,4 +224,4 @@ def pick(raw: dict, *keys):
                 continue
 
             return v
-        return None
+    return None
