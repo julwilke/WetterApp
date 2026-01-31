@@ -130,12 +130,15 @@ class APIWeatherProvider:
                 "tempMax": raw_data.get("main", {}).get("temp_max"),
                 "humidity": raw_data.get("main", {}).get("humidity"),
                 "pressure": raw_data.get("main", {}).get("pressure"),
-                "weatherDescription": (
-                    raw_data.get("weather", [{}])[0].get("description")
-                ),
+                "weatherDescription": (raw_data.get("weather", [{}])[0].get("description")),
                 "wind_speed": raw_data.get("wind", {}).get("speed"),
                 "wind_deg": raw_data.get("wind", {}).get("deg"),
+                "wind_gust": raw_data.get("wind", {}).get("gust"),
+                "visibility": raw_data.get("visibility"),
                 "clouds": raw_data.get("clouds", {}).get("all"),
+                "timezone": raw_data.get("timezone", 0),
+                "sunrise": raw_data.get("sys", {}).get("sunrise"),
+                "sunset": raw_data.get("sys", {}).get("sunset"),
             }
 
         except Exception as e:

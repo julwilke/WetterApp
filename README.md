@@ -59,7 +59,7 @@ Die **WetterApp** ist eine Web-Anwendung, die Wetterdaten abruft und visualisier
 
 ### Voraussetzungen
 
-- Python 3.9+
+- Python 3.10+
 - pip
 
 
