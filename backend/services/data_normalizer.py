@@ -153,9 +153,7 @@ def normalize_weather_data(raw: dict) -> dict:
     fog = _to_bool(raw.get("fog"), default=False)
 
     # Sonnenaufgang/-untergang
-
-    #sunrise =  time.strftime("%H:%M", time.localtime(raw.get("sunrise")))
-    #sunset = time.strftime("%H:%M", time.localtime(raw.get("sunset")))
+        # Umrechnung, weil API Unix-Zeit gibt
 
     tz_offset = raw.get("timezone", 0)
 
